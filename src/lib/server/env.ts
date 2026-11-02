@@ -2,10 +2,13 @@ import { env } from '$env/dynamic/private';
 import { dev } from '$app/environment';
 import path from 'node:path';
 
-export const dataDir = path.resolve(env.DATA_DIR || './data');
+// process.env as well: under vitest $env/dynamic/private doesn't see variables set by the test setup.
+export const dataDir = path.resolve(env.DATA_DIR || process.env.DATA_DIR || './data');
 export const dbPath = path.join(dataDir, 'tally.db');
 export const backupDir = path.join(dataDir, 'backups');
-export const migrationsDir = path.resolve(env.MIGRATIONS_DIR || './drizzle');
+export const migrationsDir = path.resolve(
+	env.MIGRATIONS_DIR || process.env.MIGRATIONS_DIR || './drizzle'
+);
 export const buildSha = env.BUILD_SHA || 'dev';
 
 export const oidc = {

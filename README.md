@@ -23,7 +23,10 @@ The image is `ghcr.io/dubberness/bens-tally`. On Unraid, use `unraid-template.xm
 | `OIDC_ISSUER`                           | OIDC provider, e.g. `https://pocketid.benpost.com`                        |
 | `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | The OIDC client. Callback URL: `<ORIGIN>/auth/callback`                   |
 | `OIDC_ALLOWED_SUBJECTS`                 | Optional allow-list. Empty: the first person to sign in becomes the owner |
+| `UP_TOKEN`                              | Optional Up personal access token; the app only reads with it             |
 | `DATA_DIR`                              | Defaults to `/data` in the image                                          |
+
+Your history loads from an .xlsx export of the old spreadsheet at Manage › Sheet import.
 
 Unauthenticated routes: `/api/health`, `/signin` and `/auth/*`.
 

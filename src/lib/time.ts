@@ -75,3 +75,113 @@ export function shortDateTime(at: Date | number): string {
 		minute: '2-digit'
 	}).format(at);
 }
+
+/* Calendar arithmetic on local 'YYYY-MM-DD' dates and 'YYYY-MM' months (no time zones involved). */
+
+/** Days in a month, 'YYYY-MM'. */
+export function daysInMonth(month: string): number {
+	const [y, m] = month.split('-').map(Number);
+	return new Date(Date.UTC(y, m, 0)).getUTCDate();
+}
+
+/** Last day of a month: '2026-02' → '2026-02-28'. */
+export function monthEnd(month: string): string {
+	return `${month}-${pad(daysInMonth(month))}`;
+}
+
+/** Same as monthEnd. */
+export const lastDayOfMonth = monthEnd;
+
+/** '2026-11' + 2 → '2027-01'. */
+export function addMonths(month: string, n: number): string {
+	const [y, m] = month.split('-').map(Number);
+	const total = y * 12 + (m - 1) + n;
+	return `${Math.floor(total / 12)}-${pad((total % 12) + 1)}`;
+}
+
+/** Whole months from a to b ('2026-01' → '2026-03' is 2). */
+export function monthsBetween(a: string, b: string): number {
+	const [ay, am] = a.split('-').map(Number);
+	const [by, bm] = b.split('-').map(Number);
+	return by * 12 + bm - (ay * 12 + am);
+}
+
+/** '2026-10-31' + 1 → '2026-11-01'. */
+export function addDays(date: string, n: number): string {
+	const [y, m, d] = date.split('-').map(Number);
+	return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10);
+}
+
+/**
+ * The latest month whose end-of-month moment (23:59 local on its last day) has passed.
+ * At 23:59 on 30 November this is "2026-11"; a minute earlier it is "2026-10".
+ */
+export function lastEndedMonth(at: Date = new Date(), hour = 23, minute = 59): string {
+	const month = localMonth(at);
+	const passed = localDate(at) === lastDayOfMonth(month) && localMinutes(at) >= hour * 60 + minute;
+	return passed ? month : addMonths(month, -1);
+}
+
+/** "Nov 2026" */
+export function monthLabel(month: string): string {
+	const [y, m] = month.split('-').map(Number);
+	return new Intl.DateTimeFormat('en-AU', {
+		month: 'short',
+		year: 'numeric',
+		timeZone: 'UTC'
+	}).format(new Date(Date.UTC(y, m - 1, 1)));
+}
+
+/** Days from a to b. */
+export function daysBetween(a: string, b: string): number {
+	const t = (s: string) => {
+		const [y, m, d] = s.split('-').map(Number);
+		return Date.UTC(y, m - 1, d);
+	};
+	return Math.round((t(b) - t(a)) / 86_400_000);
+}
+
+/** Day of the week for a local date, 0 = Sunday. */
+export function weekdayOf(date: string): number {
+	const [y, m, d] = date.split('-').map(Number);
+	return new Date(Date.UTC(y, m - 1, d)).getUTCDay();
+}
+
+/** The same day of the month in another month, clamped to its length (31 Jan + 1 → 28 Feb). */
+export function sameDayInMonth(month: string, day: number): string {
+	return `${month}-${pad(Math.min(day, daysInMonth(month)))}`;
+}
+
+const MONTH_NAMES = [
+	'January',
+	'February',
+	'March',
+	'April',
+	'May',
+	'June',
+	'July',
+	'August',
+	'September',
+	'October',
+	'November',
+	'December'
+];
+
+/** '2026-10' → 'October 2026'; { year: false } → 'October'. */
+export function monthName(month: string, opts: { year?: boolean } = {}): string {
+	const [y, m] = month.split('-').map(Number);
+	return opts.year === false ? MONTH_NAMES[m - 1] : `${MONTH_NAMES[m - 1]} ${y}`;
+}
+
+/** '2026-10' → 'Oct 26'. */
+export function shortMonth(month: string): string {
+	const [y, m] = month.split('-').map(Number);
+	return `${MONTH_NAMES[m - 1].slice(0, 3)} ${String(y).slice(2)}`;
+}
+
+/** '2026-10-31' → '31 Oct'; with year → '31 Oct 2026'. */
+export function shortDate(date: string, opts: { year?: boolean } = {}): string {
+	const [y, m, d] = date.split('-').map(Number);
+	const base = `${d} ${MONTH_NAMES[m - 1].slice(0, 3)}`;
+	return opts.year ? `${base} ${y}` : base;
+}

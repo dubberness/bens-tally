@@ -1,26 +1,19 @@
 import { and, desc, eq, lt } from 'drizzle-orm';
 import { db, schema } from '../db';
 import { log } from '../log';
-import { localDate, localMinutes } from '$lib/time';
 import { runBackup } from './backup';
 import { pruneSessions } from '../auth/session';
+import type { Job } from './types';
+import { dailyAfter } from './when';
+import { historyJobs } from '../history/jobs';
+import { upJobs } from '../up/jobs';
+import { investJobs } from '../invest/jobs';
+import { budgetJobs } from '../budget/jobs';
 
-export interface Job {
-	id: string;
-	label: string;
-	when: string;
-	/** Is the job due, given when it last succeeded? Checked once a minute. */
-	due: (now: Date, lastOk: Date | null) => boolean;
-	run: (now: Date) => Promise<string> | string;
-}
+export type { Job };
+export { dailyAfter };
 
-/** Runs once a day after the given local time; catches up if the app was down at that time. */
-export const dailyAfter =
-	(hour: number, minute: number) =>
-	(now: Date, lastOk: Date | null): boolean =>
-		localMinutes(now) >= hour * 60 + minute && (!lastOk || localDate(lastOk) < localDate(now));
-
-export const jobs: Job[] = [
+const coreJobs: Job[] = [
 	{
 		id: 'backup',
 		label: 'Backup',
@@ -44,6 +37,8 @@ export const jobs: Job[] = [
 		}
 	}
 ];
+
+export const jobs: Job[] = [...coreJobs, ...upJobs, ...investJobs, ...historyJobs, ...budgetJobs];
 
 const running = new Set<string>();
 

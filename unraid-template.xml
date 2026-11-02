@@ -50,6 +50,10 @@
           Description="Optional. Comma-separated Pocket-ID user IDs allowed in. Leave empty and the first person to sign in becomes the only allowed user."
           Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
 
+  <Config Name="Up token" Target="UP_TOKEN" Default=""
+          Description="Optional. An Up personal access token (api.up.com.au/getting_started). Read-only use: balances and transactions every 15 minutes."
+          Type="Variable" Display="always" Required="false" Mask="true"></Config>
+
   <Config Name="TZ" Target="TZ" Default="Australia/Hobart"
           Type="Variable" Display="advanced" Required="false" Mask="false">Australia/Hobart</Config>
   <Config Name="PUID" Target="PUID" Default="99"

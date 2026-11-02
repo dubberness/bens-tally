@@ -33,3 +33,17 @@ export function parseMoney(input: string): Cents | null {
 	const cents = Number(d) * 100 + Number(c.padEnd(2, '0'));
 	return negative ? -cents : cents;
 }
+
+/** Short form for tags and axis labels: $1.2k, −$150k, $1.5m. */
+export function formatMoneyShort(value: Cents, opts: { sign?: boolean } = {}): string {
+	const dollars = Math.abs(value) / 100;
+	let body: string;
+	if (dollars >= 999_500) body = `${(dollars / 1_000_000).toFixed(dollars >= 9_950_000 ? 0 : 1)}m`;
+	else if (dollars >= 9_950) body = `${Math.round(dollars / 1000)}k`;
+	else if (dollars >= 1000) body = `${(dollars / 1000).toFixed(1)}k`;
+	else body = `${Math.round(dollars)}`;
+	body = body.replace('.0k', 'k').replace('.0m', 'm');
+	if (value < 0 && body !== '0') return `−$${body}`;
+	if (opts.sign && body !== '0') return `+$${body}`;
+	return `$${body}`;
+}

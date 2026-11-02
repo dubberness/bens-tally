@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { shortDateTime } from '$lib/time';
+	import { manageSections } from '$lib/manage-sections';
 
 	let { data, form } = $props();
 	let busy = $state<string | null>(null);
@@ -12,6 +13,18 @@
 <svelte:head><title>Manage · Ben's Tally</title></svelte:head>
 
 <h1 class="disp page-title">Manage</h1>
+
+<nav class="card sections" aria-label="Manage sections">
+	{#each manageSections as s (s.href)}
+		<a class="row section" href={s.href}>
+			<span class="grow">
+				<span class="name">{s.label}</span>
+				<span class="sub small">{s.sub}</span>
+			</span>
+			<span class="chev" aria-hidden="true">›</span>
+		</a>
+	{/each}
+</nav>
 
 <div class="grid">
 	<section class="card">
@@ -103,8 +116,7 @@
 	<section class="card">
 		<span class="lbl">About</span>
 		<p class="sub">
-			Ben's Tally, version <span class="num">{data.version.slice(0, 7)}</span>. Accounts, budget
-			lines, rules and plan settings will all be edited here as they arrive.
+			Ben's Tally, version <span class="num">{data.version.slice(0, 7)}</span>.
 		</p>
 	</section>
 </div>
@@ -118,6 +130,20 @@
 	.grid {
 		display: grid;
 		gap: 12px;
+	}
+	.sections {
+		margin-bottom: 12px;
+		padding-top: 6px;
+		padding-bottom: 6px;
+	}
+	.section {
+		color: inherit;
+		text-decoration: none;
+		min-height: 44px;
+	}
+	.chev {
+		color: var(--text-3);
+		font-size: 20px;
 	}
 	.card {
 		display: flex;
@@ -157,6 +183,11 @@
 		margin: 0;
 	}
 	@media (min-width: 900px) {
+		.sections {
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			column-gap: 18px;
+		}
 		.grid {
 			grid-template-columns: 1fr 1fr;
 			align-items: start;

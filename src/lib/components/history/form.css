@@ -1,0 +1,130 @@
+/* Form pieces for the history screens (Close the month, account pages, Manage). Prefixed h- so they can't clash. */
+.h-form {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	margin: 0;
+}
+.h-label {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	font-size: 14px;
+	font-weight: 600;
+}
+.h-label .sub {
+	font-weight: 400;
+}
+.h-input,
+.h-select,
+.h-textarea {
+	width: 100%;
+	box-sizing: border-box;
+	background: var(--inset);
+	border: 1px solid #33333a;
+	border-radius: var(--r-tile);
+	color: var(--text);
+	font: 500 16px var(--font-body);
+	padding: 0 12px;
+	min-height: 48px;
+}
+.h-textarea {
+	padding: 12px;
+	font: 15px/1.45 var(--font-body);
+	resize: vertical;
+}
+.h-input:focus,
+.h-select:focus,
+.h-textarea:focus {
+	outline: none;
+	border-color: var(--accent);
+}
+.h-money {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	background: var(--inset);
+	border: 1px solid #33333a;
+	border-radius: var(--r-tile);
+	padding: 0 12px;
+	min-height: 48px;
+}
+.h-money:focus-within {
+	border-color: var(--accent);
+}
+.h-money input {
+	all: unset;
+	flex: 1;
+	min-width: 0;
+	font: 600 17px var(--font-body);
+	color: var(--text);
+	font-variant-numeric: tabular-nums;
+}
+.h-money .cur {
+	color: var(--text-2);
+	font-size: 17px;
+}
+.h-check {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-height: 44px;
+	font-size: 14px;
+}
+.h-check input {
+	width: 20px;
+	height: 20px;
+	accent-color: var(--accent);
+}
+.h-chip {
+	border: 1px solid #33333a;
+	background: var(--inset);
+	color: var(--chip-text);
+	font: 600 13px var(--font-body);
+	border-radius: 999px;
+	padding: 0 14px;
+	min-height: 44px;
+	cursor: pointer;
+}
+.h-chip[aria-pressed='true'] {
+	background: var(--text);
+	color: var(--ground);
+	border-color: var(--text);
+}
+.h-row2 {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 12px;
+}
+.h-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+.h-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	min-height: 44px;
+	color: var(--text-2);
+	text-decoration: none;
+}
+.h-title {
+	font-size: 28px;
+	letter-spacing: -0.02em;
+	margin: 0 0 14px;
+}
+.h-error {
+	color: var(--loss);
+	font-size: 13px;
+	margin: 0;
+}
+.h-ok {
+	color: var(--gain);
+	font-size: 13px;
+	margin: 0;
+}
+.btn.danger {
+	color: var(--loss);
+}
