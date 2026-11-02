@@ -1,0 +1,4 @@
+package-lock.json
+drizzle/meta/
+build/
+.svelte-kit/

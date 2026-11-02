@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>bens-tally</Name>
+  <Repository>ghcr.io/dubberness/bens-tally:latest</Repository>
+  <Registry>https://github.com/dubberness/bens-tally/pkgs/container/bens-tally</Registry>
+  <Network>br0.20</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/dubberness/bens-tally/issues</Support>
+  <Project>https://github.com/dubberness/bens-tally</Project>
+  <Overview>
+    Ben's Tally: a self-hosted personal finance tracker. Month-end net-worth snapshots, budget and
+    spending from Up, Betashares investments imported from email, and a FIRE plan. Sign-in is
+    through your own OIDC provider (Pocket-ID). All personal data lives in the appdata folder.
+  </Overview>
+  <Category>Productivity: Tools:</Category>
+  <WebUI>http://[IP]:[PORT:3000]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/dubberness/bens-tally/main/unraid-template.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/dubberness/bens-tally/main/static/icon-512.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/bens-tally" Mode="rw"
+          Description="Holds tally.db and backups/. Back this folder up."
+          Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/bens-tally</Config>
+
+  <Config Name="Public address" Target="ORIGIN" Default="https://tally.benpost.com"
+          Description="The address you open the app at. Sign-in and form checks depend on it."
+          Type="Variable" Display="always" Required="true" Mask="false">https://tally.benpost.com</Config>
+
+  <Config Name="OIDC issuer" Target="OIDC_ISSUER" Default="https://pocketid.benpost.com"
+          Description="Your Pocket-ID address."
+          Type="Variable" Display="always" Required="true" Mask="false">https://pocketid.benpost.com</Config>
+
+  <Config Name="OIDC client ID" Target="OIDC_CLIENT_ID" Default=""
+          Description="From the Pocket-ID OIDC client (callback URL: https://tally.benpost.com/auth/callback)."
+          Type="Variable" Display="always" Required="true" Mask="false"></Config>
+
+  <Config Name="OIDC client secret" Target="OIDC_CLIENT_SECRET" Default=""
+          Description="From the same Pocket-ID client."
+          Type="Variable" Display="always" Required="true" Mask="true"></Config>
+
+  <Config Name="Allowed subjects" Target="OIDC_ALLOWED_SUBJECTS" Default=""
+          Description="Optional. Comma-separated Pocket-ID user IDs allowed in. Leave empty and the first person to sign in becomes the only allowed user."
+          Type="Variable" Display="advanced" Required="false" Mask="false"></Config>
+
+  <Config Name="TZ" Target="TZ" Default="Australia/Hobart"
+          Type="Variable" Display="advanced" Required="false" Mask="false">Australia/Hobart</Config>
+  <Config Name="PUID" Target="PUID" Default="99"
+          Type="Variable" Display="advanced" Required="false" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100"
+          Type="Variable" Display="advanced" Required="false" Mask="false">100</Config>
+</Container>
