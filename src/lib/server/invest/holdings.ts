@@ -1,9 +1,14 @@
 import { and, asc, desc, eq, lte } from 'drizzle-orm';
 import { localDate } from '$lib/time';
 import { db, schema } from '../db';
-import { matchFifo, type LotResult, type LotTrade } from './lots';
+import { getSetting } from '../settings';
+import { matchLots, type LotMethod, type LotResult, type LotTrade } from './lots';
 
 export type Instrument = typeof schema.instruments.$inferSelect;
+
+export const LOT_METHOD_KEY = 'invest.lot_method';
+/** How sells are matched to parcels; FIFO unless Ben picks another in Manage › Tax rules. */
+export const lotMethod = (): LotMethod => getSetting<LotMethod>(LOT_METHOD_KEY) ?? 'fifo';
 
 export interface Price {
 	priceE4: number;
@@ -83,8 +88,9 @@ export function holdings(date: string | null, accountId?: number): Holding[] {
 		.where(accountId != null ? eq(schema.instruments.accountId, accountId) : undefined)
 		.orderBy(asc(schema.instruments.ticker))
 		.all();
+	const method = lotMethod();
 	return list.map((instrument) => {
-		const lots = matchFifo(tradesOf(instrument.id), date ?? undefined);
+		const lots = matchLots(tradesOf(instrument.id), method, date ?? undefined);
 		const held = lots.parcels.reduce((s, p) => s + p.unitsE6, 0);
 		const unitsE6 = held < DUST_E6 ? 0 : held;
 		const costCents = unitsE6 ? lots.parcels.reduce((s, p) => s + p.costCents, 0) : 0;

@@ -1,7 +1,12 @@
 /*
- * Parcels: each buy is a parcel; each sell uses up the oldest parcels first (FIFO), the
- * way the sheet does it. Pure functions so holdings and capital gains share one answer.
+ * Parcels: each buy is a parcel; each sell uses up parcels in the chosen order. FIFO
+ * (oldest first) is what the sheet does; LIFO takes the newest, and "highest cost" takes
+ * the dearest units first, which keeps a gain smallest. Pure functions so holdings and
+ * capital gains share one answer.
  */
+
+export type LotMethod = 'fifo' | 'lifo' | 'highest';
+export const LOT_METHODS: LotMethod[] = ['fifo', 'lifo', 'highest'];
 
 export interface LotTrade {
 	id?: number;
@@ -49,8 +54,28 @@ export function tradeOrder(a: LotTrade, b: LotTrade): number {
 const part = (amount: number, units: number, of: number) =>
 	of === 0 ? 0 : Math.round((amount * units) / of);
 
-/** Match one instrument's trades, FIFO. Trades on or before `upTo` only, when given. */
-export function matchFifo(trades: LotTrade[], upTo?: string): LotResult {
+/** Which open parcel a sell uses next. */
+function pick(parcels: Parcel[], method: LotMethod): number {
+	if (method === 'lifo') return parcels.length - 1;
+	if (method === 'highest') {
+		let best = 0;
+		for (let i = 1; i < parcels.length; i++)
+			if (
+				parcels[i].costCents * parcels[best].unitsE6 >
+				parcels[best].costCents * parcels[i].unitsE6
+			)
+				best = i;
+		return best;
+	}
+	return 0;
+}
+
+/** Match one instrument's trades. Trades on or before `upTo` only, when given. */
+export function matchLots(
+	trades: LotTrade[],
+	method: LotMethod = 'fifo',
+	upTo?: string
+): LotResult {
 	const parcels: Parcel[] = [];
 	const disposals: Disposal[] = [];
 	let oversoldE6 = 0;
@@ -70,7 +95,8 @@ export function matchFifo(trades: LotTrade[], upTo?: string): LotResult {
 		let left = t.unitsE6;
 		let proceedsLeft = totalProceeds;
 		while (left > 0 && parcels.length) {
-			const p = parcels[0];
+			const at = pick(parcels, method);
+			const p = parcels[at];
 			const units = Math.min(left, p.unitsE6);
 			const cost = units === p.unitsE6 ? p.costCents : part(p.costCents, units, p.unitsE6);
 			const proceeds = units === left ? proceedsLeft : part(totalProceeds, units, t.unitsE6);
@@ -85,7 +111,7 @@ export function matchFifo(trades: LotTrade[], upTo?: string): LotResult {
 			});
 			p.unitsE6 -= units;
 			p.costCents -= cost;
-			if (p.unitsE6 === 0) parcels.shift();
+			if (p.unitsE6 === 0) parcels.splice(at, 1);
 			left -= units;
 			proceedsLeft -= proceeds;
 		}
@@ -93,3 +119,6 @@ export function matchFifo(trades: LotTrade[], upTo?: string): LotResult {
 	}
 	return { parcels, disposals, oversoldE6 };
 }
+
+/** FIFO, as the sheet does it. */
+export const matchFifo = (trades: LotTrade[], upTo?: string) => matchLots(trades, 'fifo', upTo);

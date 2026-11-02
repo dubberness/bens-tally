@@ -27,6 +27,27 @@
 		email: 'the last order email',
 		trade: 'the last trade'
 	};
+	const METHOD: Record<string, string> = {
+		fifo: 'FIFO, as in your sheet',
+		lifo: 'LIFO',
+		highest: 'highest cost first'
+	};
+	const span = (date: string) => {
+		const t = (d: string) => Date.parse(`${d}T00:00:00Z`);
+		const a = t(data.tax.start);
+		const b = t(data.tax.end);
+		return Math.min(100, Math.max(0, ((t(date) - a) / (b - a)) * 100));
+	};
+	const taxLine = $derived.by(() => {
+		const t = data.tax;
+		if (t.totalCents < 0)
+			return `Net capital loss so far (${METHOD[t.method]}). It carries forward against future gains.`;
+		if (t.totalCents > 0)
+			return `${formatMoney(t.netGainCents)} goes on your tax return after losses and the discount (${METHOD[t.method]}).`;
+		return t.carryForwardCents
+			? `No sales yet this year. ${formatMoney(t.carryForwardCents)} of losses carry in from earlier years.`
+			: `No sales yet this year (${METHOD[t.method]}).`;
+	});
 	const what = (a: (typeof data.activity)[number]) =>
 		a.kind === 'buy'
 			? `Bought ${a.ticker}`
@@ -151,6 +172,38 @@
 			</div>
 
 			<div class="col">
+				<section class="card tax">
+					<div class="head">
+						<span class="lbl">Tax · FY {data.tax.label}</span>
+						<span class="num strong {tone(data.tax.totalCents)}"
+							>{data.tax.totalCents ? signed(data.tax.totalCents) : '$0'}</span
+						>
+					</div>
+					<span class="sub">{taxLine}</span>
+					<div class="timeline" aria-hidden="true">
+						<div class="line"></div>
+						<div class="line done" style="width: {span(data.tax.today)}%"></div>
+						<div class="dot now" style="left: {span(data.tax.today)}%"></div>
+						{#each data.tax.upcoming as u (u.date + u.message)}
+							<div class="dot {u.kind}" style="left: {span(u.date)}%"></div>
+						{/each}
+						<div class="dot end" style="left: 100%"></div>
+					</div>
+					<div class="tl-labels sub small" aria-hidden="true">
+						<span>Today</span><span>{shortDate(data.tax.end)}</span>
+					</div>
+					{#each data.tax.upcoming as u (u.date + u.message)}
+						<div class="upcoming">
+							<span class="key {u.kind}"></span>
+							<span class="small-name"
+								><span class="strong">{shortDate(u.date, { year: true })}:</span>
+								{u.message}</span
+							>
+						</div>
+					{/each}
+					<a class="small link" href="/invest/tax">Parcels and the year's report ›</a>
+				</section>
+
 				<section class="card">
 					<span class="lbl">Activity</span>
 					<div class="activity">
@@ -370,5 +423,64 @@
 	}
 	.empty {
 		color: var(--text-3);
+	}
+	.tax {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+	}
+	.timeline {
+		position: relative;
+		height: 18px;
+		margin: 6px 8px 0;
+	}
+	.timeline .line {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 7px;
+		height: 3px;
+		border-radius: 999px;
+		background: var(--surface-2);
+	}
+	.timeline .line.done {
+		right: auto;
+		background: var(--accent);
+	}
+	.timeline .dot {
+		position: absolute;
+		top: 1px;
+		width: 15px;
+		height: 15px;
+		margin-left: -7px;
+		border-radius: 999px;
+	}
+	.dot.now {
+		background: var(--accent);
+	}
+	.dot.discount,
+	.key.discount {
+		background: var(--gain);
+	}
+	.dot.rule,
+	.dot.end,
+	.key.rule {
+		background: var(--estimate);
+	}
+	.tl-labels {
+		display: flex;
+		justify-content: space-between;
+		margin-top: -6px;
+	}
+	.upcoming {
+		display: flex;
+		gap: 10px;
+	}
+	.key {
+		width: 10px;
+		height: 10px;
+		border-radius: 999px;
+		margin-top: 5px;
+		flex: none;
 	}
 </style>

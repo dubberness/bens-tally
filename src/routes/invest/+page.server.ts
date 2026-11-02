@@ -1,8 +1,14 @@
 import { runChecks } from '$lib/server/checks';
+import { localDate } from '$lib/time';
+import { lotMethod } from '$lib/server/invest/holdings';
+import { taxRules, taxYearOf, upcomingTaxDates } from '$lib/server/invest/tax';
 import { activity, portfolio } from '$lib/server/invest/view';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = () => {
+	const rules = taxRules();
+	const today = localDate();
+	const year = taxYearOf(today);
 	const p = portfolio();
 	const unrealised = p.valueCents - p.costCents;
 	return {
@@ -26,6 +32,19 @@ export const load: PageServerLoad = () => {
 		})),
 		priced: p.priced,
 		checks: runChecks().filter((c) => c.key.startsWith('invest:')),
-		activity: activity(30)
+		activity: activity(30),
+		tax: {
+			label: year.label,
+			start: year.start,
+			end: year.end,
+			today,
+			totalCents: year.totalCents,
+			netGainCents: year.netGainCents,
+			carryForwardCents: year.carryForwardCents,
+			broughtForwardCents: year.broughtForwardCents,
+			method: lotMethod(),
+			upcoming: upcomingTaxDates(rules, today).slice(0, 3),
+			hasRules: rules.length > 0
+		}
 	};
 };

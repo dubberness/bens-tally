@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { matchFifo, type LotTrade } from './lots';
+import { matchFifo, matchLots, type LotTrade } from './lots';
 
 const buy = (date: string, units: number, value: number, fee = 0, id?: number): LotTrade => ({
 	id,
@@ -54,5 +54,26 @@ describe('matchFifo', () => {
 		const r = matchFifo([buy('2024-01-02', 1, 10), sell('2024-05-01', 1, 30)], '2024-04-30');
 		expect(r.parcels).toHaveLength(1);
 		expect(r.disposals).toHaveLength(0);
+	});
+});
+
+describe('other matching methods', () => {
+	const trades = [
+		buy('2024-01-02', 10, 100),
+		buy('2024-02-02', 10, 300),
+		buy('2024-03-02', 10, 200),
+		sell('2024-04-02', 10, 250)
+	];
+	it('LIFO sells the newest parcel', () => {
+		expect(matchLots(trades, 'lifo').disposals[0]).toMatchObject({
+			boughtOn: '2024-03-02',
+			gainCents: 5_000
+		});
+	});
+	it('highest cost sells the dearest units', () => {
+		expect(matchLots(trades, 'highest').disposals[0]).toMatchObject({
+			boughtOn: '2024-02-02',
+			gainCents: -5_000
+		});
 	});
 });
