@@ -130,6 +130,8 @@ export function mixProblems(p: Portfolio = portfolio()): MixProblem[] {
 
 export interface ActivityRow {
 	key: string;
+	/** Where to edit it. */
+	href: string;
 	date: string;
 	kind: 'buy' | 'sell' | 'distribution';
 	ticker: string;
@@ -142,48 +144,67 @@ export interface ActivityRow {
 	note: string | null;
 }
 
+export interface ActivityFilter {
+	instrumentId?: number | null;
+	kind?: 'trades' | 'distributions' | null;
+}
+
 /** Trades and distributions, newest first. */
-export function activity(limit = 30): ActivityRow[] {
-	const trades = db
-		.select({ t: schema.trades, ticker: schema.instruments.ticker })
-		.from(schema.trades)
-		.innerJoin(schema.instruments, eq(schema.trades.instrumentId, schema.instruments.id))
-		.orderBy(desc(schema.trades.date), desc(schema.trades.id))
-		.limit(limit)
-		.all()
-		.map(({ t, ticker }): ActivityRow => ({
-			key: `t${t.id}`,
-			date: t.date,
-			kind: t.side as 'buy' | 'sell',
-			ticker,
-			unitsE6: t.unitsE6,
-			priceE4: t.priceE4,
-			perUnitE6: null,
-			amountCents: t.side === 'buy' ? t.valueCents + t.feeCents : t.valueCents - t.feeCents,
-			reinvested: false,
-			source: t.source,
-			note: t.note
-		}));
-	const dists = db
-		.select({ d: schema.distributions, ticker: schema.instruments.ticker })
-		.from(schema.distributions)
-		.innerJoin(schema.instruments, eq(schema.distributions.instrumentId, schema.instruments.id))
-		.orderBy(desc(schema.distributions.date), desc(schema.distributions.id))
-		.limit(limit)
-		.all()
-		.map(({ d, ticker }): ActivityRow => ({
-			key: `d${d.id}`,
-			date: d.date,
-			kind: 'distribution',
-			ticker,
-			unitsE6: d.unitsE6,
-			priceE4: null,
-			perUnitE6: d.perUnitE6,
-			amountCents: d.amountCents,
-			reinvested: d.reinvested,
-			source: d.source,
-			note: d.note
-		}));
+export function activity(limit = 30, filter: ActivityFilter = {}): ActivityRow[] {
+	const fund = filter.instrumentId ?? null;
+	const trades =
+		filter.kind === 'distributions'
+			? []
+			: db
+					.select({ t: schema.trades, ticker: schema.instruments.ticker })
+					.from(schema.trades)
+					.innerJoin(schema.instruments, eq(schema.trades.instrumentId, schema.instruments.id))
+					.where(fund == null ? undefined : eq(schema.trades.instrumentId, fund))
+					.orderBy(desc(schema.trades.date), desc(schema.trades.id))
+					.limit(limit)
+					.all()
+					.map(({ t, ticker }): ActivityRow => ({
+						key: `t${t.id}`,
+						href: `/invest/trades/${t.id}`,
+						date: t.date,
+						kind: t.side as 'buy' | 'sell',
+						ticker,
+						unitsE6: t.unitsE6,
+						priceE4: t.priceE4,
+						perUnitE6: null,
+						amountCents: t.side === 'buy' ? t.valueCents + t.feeCents : t.valueCents - t.feeCents,
+						reinvested: false,
+						source: t.source,
+						note: t.note
+					}));
+	const dists =
+		filter.kind === 'trades'
+			? []
+			: db
+					.select({ d: schema.distributions, ticker: schema.instruments.ticker })
+					.from(schema.distributions)
+					.innerJoin(
+						schema.instruments,
+						eq(schema.distributions.instrumentId, schema.instruments.id)
+					)
+					.where(fund == null ? undefined : eq(schema.distributions.instrumentId, fund))
+					.orderBy(desc(schema.distributions.date), desc(schema.distributions.id))
+					.limit(limit)
+					.all()
+					.map(({ d, ticker }): ActivityRow => ({
+						key: `d${d.id}`,
+						href: `/invest/distributions/${d.id}`,
+						date: d.date,
+						kind: 'distribution',
+						ticker,
+						unitsE6: d.unitsE6,
+						priceE4: null,
+						perUnitE6: d.perUnitE6,
+						amountCents: d.amountCents,
+						reinvested: d.reinvested,
+						source: d.source,
+						note: d.note
+					}));
 	return [...trades, ...dists]
 		.sort((a, b) => (a.date === b.date ? (a.key < b.key ? 1 : -1) : a.date < b.date ? 1 : -1))
 		.slice(0, limit);

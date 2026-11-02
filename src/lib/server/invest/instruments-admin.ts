@@ -122,6 +122,17 @@ export function setDriftBand(bp: number) {
 	setSetting(DRIFT_KEY, bp);
 }
 
+/** Where a new fund counts by default: the Betashares account, else the first investment one. */
+export function defaultInvestAccount() {
+	return (
+		db
+			.select({ id: schema.accounts.id })
+			.from(schema.accounts)
+			.where(and(eq(schema.accounts.source, 'betashares'), eq(schema.accounts.kind, 'investment')))
+			.get() ?? investmentAccounts()[0]
+	);
+}
+
 /** Investment accounts a fund can count toward. */
 export function investmentAccounts() {
 	return db

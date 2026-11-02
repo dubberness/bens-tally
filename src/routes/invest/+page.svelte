@@ -2,6 +2,7 @@
 	import { formatMoney } from '$lib/money';
 	import { shortDate, shortDateTime } from '$lib/time';
 	import { arrow, signed, tone } from '$lib/components/history/fmt';
+	import ActivityList from '$lib/components/invest/ActivityList.svelte';
 
 	let { data } = $props();
 
@@ -14,12 +15,6 @@
 	const allTimePct = $derived(
 		data.costCents > 0 ? ((data.allTimeCents / data.costCents) * 100).toFixed(1) : null
 	);
-	const SOURCE: Record<string, string> = {
-		sheet: 'Sheet',
-		email: 'Email',
-		csv: 'CSV',
-		manual: 'You'
-	};
 	const PRICE_SOURCE: Record<string, string> = {
 		yahoo: 'Yahoo Finance',
 		sheet_csv: 'your sheet',
@@ -48,22 +43,6 @@
 			? `No sales yet this year. ${formatMoney(t.carryForwardCents)} of losses carry in from earlier years.`
 			: `No sales yet this year (${METHOD[t.method]}).`;
 	});
-	const what = (a: (typeof data.activity)[number]) =>
-		a.kind === 'buy'
-			? `Bought ${a.ticker}`
-			: a.kind === 'sell'
-				? `Sold ${a.ticker}`
-				: `${a.ticker} distribution`;
-	const how = (a: (typeof data.activity)[number]) => {
-		if (a.kind === 'distribution') {
-			const parts = [];
-			if (a.perUnitE6 && a.unitsE6)
-				parts.push(`$${(a.perUnitE6 / 1e6).toFixed(4)} × ${units(a.unitsE6)} units`);
-			parts.push(a.reinvested ? 'reinvested' : 'kept as cash');
-			return parts.join(' · ');
-		}
-		return `${units(a.unitsE6 ?? 0, 4)} @ ${price(a.priceE4 ?? 0)}`;
-	};
 </script>
 
 <svelte:head><title>Invest · Ben's Tally</title></svelte:head>
@@ -102,6 +81,31 @@
 					{/if}
 				</span>
 				<a class="small link" href="/manage/instruments">Funds</a>
+			</div>
+			<div class="strip">
+				<svg
+					width="20"
+					height="20"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke={data.inbox ? 'var(--accent)' : 'var(--text-3)'}
+					stroke-width="1.8"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+					><path d="M4 13h4l1.5 3h5l1.5-3h4" /><path
+						d="M5.5 5h13L21 13v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-5z"
+					/></svg
+				>
+				<span class="grow small">
+					{#if data.inbox}
+						<span class="strong">{data.inbox} import{data.inbox === 1 ? '' : 's'}</span> to look at in
+						the Inbox.
+					{:else}
+						Imports: nothing to look at.
+					{/if}
+				</span>
+				<a class="small link" href="/manage/inbox">{data.inbox ? 'Inbox' : 'Upload CSV'}</a>
 			</div>
 		{:else}
 			<span class="disp num big empty">—</span>
@@ -205,28 +209,11 @@
 				</section>
 
 				<section class="card">
-					<span class="lbl">Activity</span>
-					<div class="activity">
-						{#each data.activity as a (a.key)}
-							<div class="row act">
-								<span class="sub num date small">{shortDate(a.date)}</span>
-								<span class="grow names">
-									<span class="name small-name">{what(a)}</span>
-									<span class="sub num small">{how(a)}</span>
-								</span>
-								<span class="vals">
-									<span class="num strong small-name" class:gain={a.kind !== 'buy'}
-										>{a.kind === 'buy' ? '' : '+'}{formatMoney(a.amountCents, {
-											cents: true
-										})}</span
-									>
-									<span class="badge">{SOURCE[a.source] ?? a.source}</span>
-								</span>
-							</div>
-						{:else}
-							<p class="sub">No trades yet.</p>
-						{/each}
+					<div class="head">
+						<span class="lbl">Activity</span>
+						<a class="small link" href="/invest/activity">All activity ›</a>
 					</div>
+					<ActivityList rows={data.activity} />
 				</section>
 			</div>
 		</div>
@@ -410,16 +397,6 @@
 		align-items: flex-end;
 		gap: 2px;
 		flex: none;
-	}
-	.activity {
-		display: flex;
-		flex-direction: column;
-		margin-top: 8px;
-	}
-	.date {
-		width: 48px;
-		flex: none;
-		font-weight: 600;
 	}
 	.empty {
 		color: var(--text-3);

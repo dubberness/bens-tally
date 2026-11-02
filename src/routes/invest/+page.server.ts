@@ -1,6 +1,7 @@
 import { runChecks } from '$lib/server/checks';
 import { localDate } from '$lib/time';
 import { lotMethod } from '$lib/server/invest/holdings';
+import { inboxCount } from '$lib/server/invest/inbox';
 import { taxRules, taxYearOf, upcomingTaxDates } from '$lib/server/invest/tax';
 import { activity, portfolio } from '$lib/server/invest/view';
 import type { PageServerLoad } from './$types';
@@ -32,7 +33,8 @@ export const load: PageServerLoad = () => {
 		})),
 		priced: p.priced,
 		checks: runChecks().filter((c) => c.key.startsWith('invest:')),
-		activity: activity(30),
+		activity: activity(12),
+		inbox: inboxCount(),
 		tax: {
 			label: year.label,
 			start: year.start,
