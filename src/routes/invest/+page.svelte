@@ -101,6 +101,12 @@
 					{#if data.inbox}
 						<span class="strong">{data.inbox} import{data.inbox === 1 ? '' : 's'}</span> to look at in
 						the Inbox.
+					{:else if data.email.configured}
+						Emails: {data.email.lastEmailAt
+							? `last one ${shortDateTime(data.email.lastEmailAt)}`
+							: 'none yet'}{data.email.checkedAt
+							? `, checked ${shortDateTime(data.email.checkedAt)}`
+							: ''}{data.email.failed ? ' (the last check failed)' : ''}.
 					{:else}
 						Imports: nothing to look at.
 					{/if}

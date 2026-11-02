@@ -1,0 +1,23 @@
+# Ben's Tally mail Worker. Deploying, Email Routing and DNS are set up by hand; see README.md.
+name = "tally-mail"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "tally-mail"
+# From `npx wrangler d1 create tally-mail`.
+database_id = "REPLACE_WITH_DATABASE_ID"
+
+[triggers]
+# Daily clean-up of mail older than KEEP_DAYS.
+crons = ["17 17 * * *"]
+
+[vars]
+# The two Betashares notification senders, and the domain whose DKIM must pass.
+ALLOWED_SENDERS = "orders@notification.betashares.com.au,updates@account.betashares.com.au"
+SENDER_DOMAIN = "betashares.com.au"
+# Mail servers whose Authentication-Results are believed: Cloudflare's own receiving servers.
+TRUSTED_AUTHSERV = "mx.cloudflare.net"
+KEEP_DAYS = "30"
+# Secrets (wrangler secret put …): APP_TOKEN, IMPORT_ADDRESS, and optionally FORWARDED_BY.

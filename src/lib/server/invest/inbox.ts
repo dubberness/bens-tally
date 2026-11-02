@@ -2,7 +2,15 @@ import { desc, eq, ne, sql } from 'drizzle-orm';
 import { db, schema } from '../db';
 import type { CsvItemResult } from './csv-import';
 import { instrumentFor } from './csv-import';
-import { addTrade, findTrade, updateTrade } from './records';
+import type { EmailItemResult } from './email';
+import {
+	addDistribution,
+	addTrade,
+	findDistribution,
+	findTrade,
+	updateDistribution,
+	updateTrade
+} from './records';
 
 /*
  * The Inbox: imported things the app wouldn't guess about. Each item stays until Ben
@@ -36,13 +44,22 @@ export function inboxItems() {
 		.map((i) => (i.result as CsvItemResult | null)?.kind === 'differs' && i.result)
 		.filter(Boolean)
 		.map((r) => (r as Extract<CsvItemResult, { kind: 'differs' }>).tradeId);
+	const distributionIds = review.flatMap((i) => {
+		const r = i.result as EmailItemResult | null;
+		return r?.kind === 'income'
+			? r.lines.filter((l) => l.distributionId != null).map((l) => l.distributionId!)
+			: [];
+	});
+	const distributions = Object.fromEntries(
+		distributionIds.map((id) => [id, findDistribution(id)] as const).filter(([, d]) => !!d)
+	);
 	const trades = new Map(
 		tradeIds.map((id) => [id, findTrade(id)] as const).filter(([, t]) => !!t) as [
 			number,
 			NonNullable<ReturnType<typeof findTrade>>
 		][]
 	);
-	return { review, done, trades };
+	return { review, done, trades, distributions };
 }
 
 export type InboxAction = 'use-file' | 'keep' | 'add' | 'ignore' | 'reopen';
@@ -76,7 +93,8 @@ export function resolveItem(id: number, action: InboxAction): string | null {
 		settle(item, 'ignored', 'Ignored');
 		return null;
 	}
-	const r = item.result as CsvItemResult | null;
+	const r = item.result as CsvItemResult | EmailItemResult | null;
+	if (r?.kind === 'income') return resolveIncome(item, r, action);
 	if (r?.kind !== 'differs') return 'Nothing to apply for this one.';
 	const t = r.incoming;
 	const trade = findTrade(r.tradeId);
@@ -128,5 +146,41 @@ export function resolveItem(id: number, action: InboxAction): string | null {
 	if (t.orderId && !trade.orderId && orderFree(t.orderId))
 		updateTrade(trade.id, { orderId: t.orderId }, 'Order ID from an import; figures kept');
 	settle(item, 'ignored', 'Kept the app’s figures');
+	return null;
+}
+
+/** An income email whose lines differ from distributions the app has. */
+function resolveIncome(
+	item: ImportItem,
+	r: Extract<EmailItemResult, { kind: 'income' }>,
+	action: InboxAction
+): string | null {
+	if (action === 'keep') {
+		settle(item, 'ignored', 'Kept the app’s figures');
+		return null;
+	}
+	if (action !== 'use-file') return 'Nothing to do that with.';
+	for (const l of r.lines) {
+		if (l.outcome !== 'differs') continue;
+		const err =
+			l.distributionId != null && findDistribution(l.distributionId)
+				? updateDistribution(
+						l.distributionId,
+						{
+							date: l.incoming.date,
+							amountCents: l.incoming.amountCents,
+							reinvested: l.incoming.reinvested,
+							unitsE6: l.incoming.unitsE6,
+							perUnitE6: l.incoming.perUnitE6
+						},
+						'From a Betashares email'
+					)
+				: (() => {
+						const id = addDistribution(l.incoming, 'email', item.id);
+						return typeof id === 'string' ? id : null;
+					})();
+		if (err) return `${l.ticker}: ${err}`;
+	}
+	settle(item, 'applied', "Used the email's figures");
 	return null;
 }

@@ -265,6 +265,13 @@ export function parseBetashares(input: { subject: string; text: string }): Parse
 	const subject = input.subject.replace(SUBJECT_PREFIX, '').trim();
 	if (/order for .+ has been filled/i.test(subject)) return parseTrade(subject, input.text);
 	if (/received income of/i.test(subject)) return parseIncome(subject, input.text);
+	// Setting up the Gmail filter sends one of these; Ben needs the code from it.
+	const gmail = subject.match(/\(#(\d{6,})\)\s*Gmail Forwarding Confirmation/i);
+	if (gmail)
+		return {
+			kind: 'unknown',
+			reason: `Gmail forwarding confirmation. Code ${gmail[1]}: enter it in Gmail › Settings › Forwarding`
+		};
 	for (const [re, reason] of IGNORED) if (re.test(subject)) return { kind: 'ignored', reason };
 	if (/order for .+ (cancelled|canceled|expired|rejected|placed)/i.test(subject))
 		return { kind: 'ignored', reason: 'Order not filled' };

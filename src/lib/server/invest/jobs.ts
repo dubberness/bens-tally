@@ -1,6 +1,7 @@
 import { localDate, localMinutes } from '$lib/time';
 import type { Job } from '../jobs/types';
 import { every, isWeekday } from '../jobs/when';
+import { collectEmails, emailConfigured } from './email';
 import { updatePrices } from './prices';
 
 const OPEN = 10 * 60;
@@ -27,5 +28,13 @@ export const pricesJob: Job = {
 	run: async (now) => (await updatePrices(now)).message
 };
 
+export const emailJob: Job = {
+	id: 'invest.email',
+	label: 'Betashares emails',
+	when: 'Every 15 minutes, once the mail Worker is set up',
+	due: (now, lastOk) => emailConfigured() && every(15)(now, lastOk),
+	run: (now) => collectEmails(now)
+};
+
 /** Scheduled jobs for this area; the scheduler runs them with the others. */
-export const investJobs: Job[] = [pricesJob];
+export const investJobs: Job[] = [pricesJob, emailJob];

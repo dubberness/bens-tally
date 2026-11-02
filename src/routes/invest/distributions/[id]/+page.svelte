@@ -24,7 +24,11 @@
 <div class="grid">
 	<section class="card">
 		{#if d}<p class="sub small">
-				{SOURCE_TEXT[d.source] ?? d.source} Changes are kept in the history below.
+				{SOURCE_TEXT[d.source] ?? d.source}
+				{#if d.importItemId}<a href="/manage/inbox/{d.importItemId}"
+						>{d.source === 'email' ? 'Show the email' : 'Show where it came from'}</a
+					>.{/if}
+				Changes are kept in the history below.
 			</p>{/if}
 		<form
 			method="POST"

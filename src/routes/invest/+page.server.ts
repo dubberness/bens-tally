@@ -2,6 +2,9 @@ import { runChecks } from '$lib/server/checks';
 import { localDate } from '$lib/time';
 import { lotMethod } from '$lib/server/invest/holdings';
 import { inboxCount } from '$lib/server/invest/inbox';
+import { emailStatus } from '$lib/server/invest/email';
+import { emailJob } from '$lib/server/invest/jobs';
+import { lastRun } from '$lib/server/jobs/scheduler';
 import { taxRules, taxYearOf, upcomingTaxDates } from '$lib/server/invest/tax';
 import { activity, portfolio } from '$lib/server/invest/view';
 import type { PageServerLoad } from './$types';
@@ -35,6 +38,16 @@ export const load: PageServerLoad = () => {
 		checks: runChecks().filter((c) => c.key.startsWith('invest:')),
 		activity: activity(12),
 		inbox: inboxCount(),
+		email: (() => {
+			const st = emailStatus();
+			const run = lastRun(emailJob.id);
+			return {
+				configured: st.configured,
+				lastEmailAt: st.lastEmailAt,
+				checkedAt: run?.startedAt ?? null,
+				failed: run?.ok === false
+			};
+		})(),
 		tax: {
 			label: year.label,
 			start: year.start,

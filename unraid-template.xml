@@ -54,6 +54,14 @@
           Description="Optional. An Up personal access token (api.up.com.au/getting_started). Read-only use: balances and transactions every 15 minutes."
           Type="Variable" Display="always" Required="false" Mask="true"></Config>
 
+  <Config Name="Mail Worker URL" Target="WORKER_URL" Default=""
+          Description="Optional. The Cloudflare mail Worker's address, e.g. https://tally-mail.example.workers.dev. Betashares order and income emails are collected from it every 15 minutes."
+          Type="Variable" Display="always" Required="false" Mask="false"></Config>
+
+  <Config Name="Mail Worker token" Target="WORKER_TOKEN" Default=""
+          Description="Optional. The APP_TOKEN secret set on the mail Worker."
+          Type="Variable" Display="always" Required="false" Mask="true"></Config>
+
   <Config Name="TZ" Target="TZ" Default="Australia/Hobart"
           Type="Variable" Display="advanced" Required="false" Mask="false">Australia/Hobart</Config>
   <Config Name="PUID" Target="PUID" Default="99"

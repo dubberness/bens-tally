@@ -23,3 +23,9 @@ export const oidc = {
 
 /** Only honoured by `vite dev`; a production build never skips the login. */
 export const skipLogin = dev && env.DEV_SKIP_LOGIN === '1';
+
+/** The mail Worker the Betashares emails are collected from; both empty = not set up. */
+export const mailWorker = {
+	url: (env.WORKER_URL || process.env.WORKER_URL || '').trim().replace(/\/+$/, ''),
+	token: (env.WORKER_TOKEN || process.env.WORKER_TOKEN || '').trim()
+};

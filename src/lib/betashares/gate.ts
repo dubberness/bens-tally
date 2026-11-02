@@ -74,12 +74,14 @@ export function checkMail(
 	if (!from || !cfg.senders.map((s) => s.toLowerCase()).includes(from))
 		return { ok: false, reason: `Sender ${from ?? '(none)'} isn't allowed` };
 
-	const values = input.headers
+	// Only the topmost result from a trusted server counts. Servers add theirs above the
+	// message, so anything lower down could have been written by whoever sent it.
+	const servers = cfg.trustedAuthServ.map((s) => s.toLowerCase());
+	const top = input.headers
 		.filter((h) => h.name === 'authentication-results' || h.name === 'arc-authentication-results')
-		.map((h) => h.value);
-	const trusted = authResults(values).filter((r) =>
-		cfg.trustedAuthServ.map((s) => s.toLowerCase()).includes(r.authserv)
-	);
+		.map((h) => authResults([h.value]))
+		.find((rs) => rs.length && servers.includes(rs[0].authserv));
+	const trusted = top ?? [];
 	const domain = cfg.domain.toLowerCase();
 	if (
 		trusted.some((r) => r.method === 'dmarc' && r.result === 'fail' && inDomain(r.domain, domain))
