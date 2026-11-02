@@ -25,14 +25,37 @@ export function sheetImportClosed(): boolean {
 	return getSetting<boolean>(CLOSED_KEY) === true;
 }
 
-/** Wipe everything an earlier import made, load the workbook again, then validate. */
+/** Areas the last import report covers. */
+export function loadedAreas(): string[] {
+	const last = getSetting<SheetImportResult>(LAST_KEY);
+	return last?.ok ? [...new Set(last.lines.map((l) => l.area))] : [];
+}
+
+/**
+ * Wipe everything an earlier import made, load the workbook again, then validate.
+ * With `only`, just those areas are wiped and loaded (the others keep what they have,
+ * and their lines in the last report); after go-live that's allowed only for an area
+ * the sheet never loaded, so a new part of the app can still pick up the sheet's history.
+ */
 export function runSheetImport(
 	data: Uint8Array,
 	fileName: string,
-	now = new Date()
+	now = new Date(),
+	only?: string[]
 ): SheetImportResult {
-	if (sheetImportClosed()) throw new Error('The sheet import is switched off');
+	const chosen = only?.length ? areas.filter((a) => only.includes(a.id)) : areas;
+	if (sheetImportClosed()) {
+		const loaded = loadedAreas();
+		if (!only?.length || chosen.some((a) => loaded.includes(a.id)))
+			throw new Error('The sheet import is switched off');
+	}
 	const wb = readWorkbook(data);
+	const kept =
+		only?.length && getSetting<SheetImportResult>(LAST_KEY)?.ok
+			? getSetting<SheetImportResult>(LAST_KEY)!.lines.filter(
+					(l) => !chosen.some((a) => a.id === l.area)
+				)
+			: [];
 	const lines: ReportLine[] = [];
 	let area = 'import';
 	const ctx: SheetContext = {
@@ -42,16 +65,16 @@ export function runSheetImport(
 	};
 	try {
 		sqlite.transaction(() => {
-			for (const a of [...areas].reverse()) {
+			for (const a of [...chosen].reverse()) {
 				area = a.id;
 				a.wipe();
 			}
-			for (const a of areas) {
+			for (const a of chosen) {
 				area = a.id;
 				a.run(ctx);
 			}
 		})();
-		for (const a of areas) {
+		for (const a of chosen) {
 			area = a.id;
 			a.validate?.(ctx);
 		}
@@ -64,7 +87,7 @@ export function runSheetImport(
 		at: now.getTime(),
 		fileName,
 		ok: !lines.some((l) => l.level === 'fail'),
-		lines
+		lines: [...kept, ...lines]
 	};
 	setSetting(LAST_KEY, result);
 	return result;

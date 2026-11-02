@@ -185,3 +185,14 @@ export function shortDate(date: string, opts: { year?: boolean } = {}): string {
 	const base = `${d} ${MONTH_NAMES[m - 1].slice(0, 3)}`;
 	return opts.year ? `${base} ${y}` : base;
 }
+
+/** Australian financial year (1 July to 30 June) holding a date: { label: '2026–27', start, end }. */
+export function financialYear(date: string): { label: string; start: string; end: string } {
+	const y = Number(date.slice(0, 4));
+	const startYear = Number(date.slice(5, 7)) >= 7 ? y : y - 1;
+	return {
+		label: `${startYear}–${String((startYear + 1) % 100).padStart(2, '0')}`,
+		start: `${startYear}-07-01`,
+		end: `${startYear + 1}-06-30`
+	};
+}

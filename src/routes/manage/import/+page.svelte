@@ -5,6 +5,8 @@
 
 	let { data, form } = $props();
 	let busy = $state(false);
+	// svelte-ignore state_referenced_locally
+	let part = $state(data.closed ? (data.parts[0]?.id ?? 'all') : 'all');
 
 	const counts = $derived(
 		data.last
@@ -25,14 +27,19 @@
 <div class="grid">
 	<section class="card">
 		<span class="lbl">Load from the sheet</span>
-		{#if data.closed}
+		{#if data.closed && !data.parts.length}
 			<p class="sub">The app is now the record, so the sheet import is switched off.</p>
 		{:else}
-			<p class="sub">
-				In Google Sheets choose File › Download › Microsoft Excel (.xlsx), then pick that file here.
-				Each run removes everything the last import made and loads it again; nothing you entered in
-				the app is touched. The file itself isn't kept.
-			</p>
+			{#if data.closed}
+				<p class="sub">
+					The app is now the record, so only a part the sheet never loaded can still come in.
+				</p>
+			{:else}
+				<p class="sub">
+					In Google Sheets choose File › Download › Microsoft Excel (.xlsx), then pick that file
+					here. The file itself isn't kept.
+				</p>
+			{/if}
 			<form
 				method="POST"
 				action="?/upload"
@@ -49,6 +56,31 @@
 					<span class="sub small">Sheet export</span>
 					<input type="file" name="file" accept=".xlsx" required />
 				</label>
+				{#if data.anyLoaded && data.parts.length}
+					<fieldset class="parts">
+						<legend class="sub small">What to load</legend>
+						{#if !data.closed}
+							<label class="check"
+								><input type="radio" name="part" value="all" bind:group={part} /> Everything again</label
+							>
+						{/if}
+						{#each data.parts as p (p.id)}
+							<label class="check"
+								><input type="radio" name="part" value={p.id} bind:group={part} />
+								{p.label} only{p.loaded ? '' : ' (not loaded yet)'}</label
+							>
+						{/each}
+					</fieldset>
+				{:else}
+					<input type="hidden" name="part" value="all" />
+				{/if}
+				{#if part === 'all' && data.anyLoaded}
+					<p class="sub small">
+						Everything again removes what the last import made, accounts included, and loads it
+						afresh. Links and calculations you set on the sheet's accounts (an Up saver link, a
+						loan's terms) go with them, so load just one part when that's all you need.
+					</p>
+				{/if}
 				<button class="btn primary" disabled={busy}>{busy ? 'Importing…' : 'Import'}</button>
 			</form>
 		{/if}
@@ -125,6 +157,14 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: baseline;
+	}
+	.parts {
+		border: 0;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
 	}
 	form {
 		display: flex;

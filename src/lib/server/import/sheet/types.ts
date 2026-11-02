@@ -23,6 +23,8 @@ export interface SheetArea {
 	label: string;
 	wipe: () => void;
 	run: (ctx: SheetContext) => void;
+	/** Not built yet: offered nowhere, so a run can't claim it loaded anything. */
+	pending?: boolean;
 	/** Compares the result with the sheet's own figures; runs after every area has loaded. */
 	validate?: (ctx: SheetContext) => void;
 }

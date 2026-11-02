@@ -4,6 +4,7 @@ import { addDays, localDate, monthEnd, monthName, monthsBetween } from '$lib/tim
 import { db, schema } from '../../db';
 import { findOrCreateAccount, type NewAccount } from '../../accounts';
 import { serialToDate, type Cell, type Sheet } from '../xlsx';
+import { cents, find, is, need, num, starts, text } from './cells';
 import type { SheetArea, SheetContext } from './types';
 import {
 	breakdownBetween,
@@ -20,34 +21,6 @@ import { shareOf } from '../../history/schedule';
  * moved column doesn't break it. Nothing here names a real account or figure: names and
  * numbers all come from the workbook.
  */
-
-const num = (c: Cell): number | null => {
-	if (typeof c === 'number') return c;
-	if (typeof c === 'string') {
-		const n = Number(c.replace(/[$,\s]/g, ''));
-		return c.trim() !== '' && Number.isFinite(n) ? n : null;
-	}
-	return null;
-};
-const cents = (c: Cell) => Math.round((num(c) ?? 0) * 100);
-const text = (c: Cell) => (c == null ? '' : String(c).trim());
-
-/** First cell whose text matches, searching the given rows. */
-function find(sheet: Sheet, match: (s: string) => boolean, rows = sheet.maxRow) {
-	for (let r = 1; r <= Math.min(rows, sheet.maxRow); r++)
-		for (let c = 1; c <= sheet.maxCol; c++) {
-			const v = sheet.at(r, c);
-			if (typeof v === 'string' && match(v.trim())) return { row: r, col: c };
-		}
-	return null;
-}
-const is = (label: string) => (s: string) => s.toLowerCase() === label.toLowerCase();
-const starts = (label: string) => (s: string) => s.toLowerCase().startsWith(label.toLowerCase());
-
-function need<T>(v: T | null | undefined, what: string): T {
-	if (v == null) throw new Error(`Couldn't find ${what} in the sheet`);
-	return v;
-}
 
 /** 'November 2025' or a date serial → '2025-11'. */
 function monthOfCell(c: Cell): string | null {
