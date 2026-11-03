@@ -316,6 +316,14 @@
 		}
 	}
 	@media (min-width: 900px) {
+		/* A list of one-line rows reads badly when it runs the full width of a wide screen. */
+		.page-title,
+		.filters,
+		.count,
+		.days,
+		.pager {
+			max-width: 820px;
+		}
 		.filters {
 			flex-direction: row;
 			align-items: center;
