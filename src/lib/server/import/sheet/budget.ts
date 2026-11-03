@@ -36,7 +36,7 @@ const FREQUENCIES: Record<string, PayFrequency> = {
 	monthly: 'month'
 };
 
-/** "Up - Essentials" → "Essentials": the sheet prefixes the bank to its savers' names. */
+/** "Up - Daily" → "Daily": the sheet prefixes the bank to its savers' names. */
 const bareName = (s: string) => s.replace(/^\s*up\s*[-–:]\s*/i, '').trim();
 
 /** The account a saver name points at: same name ignoring emoji and the bank prefix, else a new one. */

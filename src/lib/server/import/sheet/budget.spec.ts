@@ -56,7 +56,7 @@ const tab = sheetOf({
 	C10: 100,
 	F10: 'Up - Daily',
 	G10: 'Fun',
-	A11: 'Rainy savings',
+	A11: 'Holiday pot',
 	C11: 200,
 	F11: 'Up - Bills',
 	G11: 'Holiday',
@@ -108,7 +108,7 @@ describe('Budget tab import', () => {
 			'Acme Telco',
 			'Groceries',
 			'Treats',
-			'Rainy savings',
+			'Holiday pot',
 			'Mystery',
 			'Yearly Expenses - Automatic'
 		]);

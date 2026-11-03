@@ -10,7 +10,7 @@ export const manageSections = [
 	},
 	{ href: '/manage/tax', label: 'Tax rules', sub: 'Capital gains discount and holding period' },
 	{ href: '/manage/inbox', label: 'Inbox and CSV', sub: 'Emails to review, Betashares CSV upload' },
-	{ href: '/manage/rules', label: 'Rules', sub: 'How transactions are sorted' },
+	{ href: '/manage/rules', label: 'Rules', sub: 'How Up transactions count toward budget lines' },
 	{ href: '/manage/settings', label: 'Settings', sub: 'Payday, investable accounts, birth date' },
 	{
 		href: '/manage/import',

@@ -40,7 +40,7 @@ export function readRuleForm(f: FormData): RuleInput | string {
 	const lineId = Number(str(f, 'budgetLineId'));
 	if (action === 'budget' && !(lineId > 0)) return 'Pick the budget line this counts toward';
 	const label = str(f, 'label');
-	if (action === 'other_person' && !label) return 'Say whose it is, like “Dad”';
+	if (action === 'other_person' && !label) return 'Say whose it is, like “Pat”';
 	const name = str(f, 'name') || match.merchant || match.description || match.category || 'Rule';
 	return {
 		name,
