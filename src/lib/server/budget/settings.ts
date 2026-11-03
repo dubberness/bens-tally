@@ -1,8 +1,8 @@
 import { getSetting, setSetting } from '../settings';
 
 /**
- * Budget settings. Generic starting values are written to the settings table on
- * first use, so Ben can change them and calculations always read the stored value.
+ * Budget settings. The generic starting values below apply until Ben saves his own
+ * in the budget editor; calculations always read the stored value when there is one.
  */
 export const BUDGET_SETTINGS = {
 	/** How far the pay split total or a saver's real transfers may drift before a check fires. */
@@ -24,9 +24,7 @@ type Spec = (typeof BUDGET_SETTINGS)[keyof typeof BUDGET_SETTINGS];
 
 export function budgetSetting<T>(spec: Spec): T {
 	const v = getSetting<T>(spec.key);
-	if (v !== undefined) return v;
-	setSetting(spec.key, spec.seed);
-	return spec.seed as T;
+	return (v === undefined || v === null ? spec.seed : v) as T;
 }
 
 export function setBudgetSetting(spec: Spec, value: unknown) {

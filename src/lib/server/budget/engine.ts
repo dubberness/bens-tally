@@ -167,7 +167,11 @@ function normalise(input: RuleInput) {
 }
 
 /** New rules go first unless a position is given, so a specific rule beats broader ones. */
-export function createRule(input: RuleInput, position: 'first' | 'last' = 'first'): Rule {
+export function createRule(
+	input: RuleInput,
+	position: 'first' | 'last' = 'first',
+	apply = true
+): Rule {
 	const edge = db
 		.select({
 			min: sql<number>`coalesce(min(${schema.rules.sortOrder}), 0)`,
@@ -186,7 +190,7 @@ export function createRule(input: RuleInput, position: 'first' | 'last' = 'first
 		})
 		.returning()
 		.get() as Rule;
-	applyRules();
+	if (apply) applyRules();
 	return row;
 }
 
