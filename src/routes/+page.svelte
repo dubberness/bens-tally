@@ -60,6 +60,8 @@
 
 <svelte:head><title>Ben's Tally</title></svelte:head>
 
+<h1 class="sr-only">Home</h1>
+
 <div class="home">
 	{#if data.toClose}
 		<div class="a-banner">

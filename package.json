@@ -13,12 +13,15 @@
 		"lint": "prettier --check .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
-		"test": "npm run test:unit -- --run"
+		"test": "npm run test:unit -- --run",
+		"test:e2e": "playwright test",
+		"e2e:seed": "vitest --run --config e2e/vitest.seed.config.ts"
 	},
 	"engines": {
 		"node": ">=22"
 	},
 	"devDependencies": {
+		"@playwright/test": "^1.64.0",
 		"@sveltejs/adapter-node": "^5.5.7",
 		"@sveltejs/kit": "^2.70.3",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",

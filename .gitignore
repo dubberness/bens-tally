@@ -15,3 +15,5 @@ vite.config.ts.timestamp-*
 *.csv
 *.eml
 *.pdf
+/test-results
+/playwright-report

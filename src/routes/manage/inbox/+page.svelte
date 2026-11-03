@@ -138,7 +138,7 @@
 								>Show the email ›</a
 							>{/if}
 					</div>
-					{#if r.kind === 'differs' && 'incoming' in r}
+					{#if r?.kind === 'differs' && 'incoming' in r}
 						{@const mine = data.trades[r.tradeId]}
 						<p>
 							<span class="strong"
@@ -191,7 +191,7 @@
 							{#if mine}<a class="small link" href="/invest/trades/{mine.id}">Open the app's ›</a
 								>{/if}
 						</form>
-					{:else if r.kind === 'income' && 'lines' in r}
+					{:else if r?.kind === 'income' && 'lines' in r}
 						<p class="strong">Distributions paid {shortDate(r.date, { year: true })}</p>
 						{#each r.lines.filter((l) => l.outcome === 'differs') as l (l.ticker)}
 							{@const mine = l.distributionId != null ? data.distributions[l.distributionId] : null}
@@ -234,7 +234,7 @@
 							>
 							<button class="btn" name="action" value="keep" disabled={busy}>Keep the app's</button>
 						</form>
-					{:else if r.kind === 'problem' && 'row' in r}
+					{:else if r?.kind === 'problem' && 'row' in r}
 						<p class="strong">{r.message}.</p>
 						<dl class="raw small">
 							{#each r.row as cell, i (i)}
@@ -249,7 +249,9 @@
 						</form>
 					{:else}
 						<p>
-							{'reason' in r && r.reason ? r.reason : 'Not something the app knows how to read.'}
+							{r && 'reason' in r && r.reason
+								? r.reason
+								: 'Not something the app knows how to read.'}
 						</p>
 						<form method="POST" action="?/resolve" class="choices" use:enhance={submitting}>
 							<input type="hidden" name="id" value={item.id} />

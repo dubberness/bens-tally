@@ -16,7 +16,7 @@
 <svelte:head><title>Import · Ben's Tally</title></svelte:head>
 
 <a class="h-back back" href="/manage/inbox"><Icon name="back" size={18} /> Inbox</a>
-<h1 class="disp title">{data.mail?.subject ?? data.item.subject ?? 'Import'}</h1>
+<h1 class="disp title">{data.mail?.subject || data.item.subject || 'Import'}</h1>
 
 <div class="grid">
 	<section class="card">
