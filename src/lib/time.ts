@@ -122,11 +122,11 @@ export function lastEndedMonth(at: Date = new Date(), hour = 23, minute = 59): s
 	return passed ? month : addMonths(month, -1);
 }
 
-/** "Nov 2026" */
-export function monthLabel(month: string): string {
+/** "Nov 2026" (or "November 2026" with long). */
+export function monthLabel(month: string, long = false): string {
 	const [y, m] = month.split('-').map(Number);
 	return new Intl.DateTimeFormat('en-AU', {
-		month: 'short',
+		month: long ? 'long' : 'short',
 		year: 'numeric',
 		timeZone: 'UTC'
 	}).format(new Date(Date.UTC(y, m - 1, 1)));
@@ -195,4 +195,14 @@ export function financialYear(date: string): { label: string; start: string; end
 		start: `${startYear}-07-01`,
 		end: `${startYear + 1}-06-30`
 	};
+}
+
+/** '7 Oct' from 'YYYY-MM-DD'. */
+export function shortDay(date: string): string {
+	const [y, m, d] = date.split('-').map(Number);
+	return new Intl.DateTimeFormat('en-AU', {
+		day: 'numeric',
+		month: 'short',
+		timeZone: 'UTC'
+	}).format(Date.UTC(y, m - 1, d));
 }
