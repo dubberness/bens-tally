@@ -91,7 +91,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: calc(18px + env(safe-area-inset-top)) 20px 6px;
+		padding: calc(18px + env(safe-area-inset-top)) calc(20px + env(safe-area-inset-right)) 6px
+			calc(20px + env(safe-area-inset-left));
 	}
 	.top-text {
 		display: flex;
@@ -116,7 +117,8 @@
 		color: var(--text);
 	}
 	main {
-		padding: 14px var(--gutter) 0;
+		padding: 14px calc(var(--gutter) + env(safe-area-inset-right)) 0
+			calc(var(--gutter) + env(safe-area-inset-left));
 	}
 
 	.tabs {
@@ -126,7 +128,8 @@
 		bottom: 0;
 		display: flex;
 		justify-content: space-around;
-		padding: 8px 6px calc(10px + env(safe-area-inset-bottom));
+		padding: 8px calc(6px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom))
+			calc(6px + env(safe-area-inset-left));
 		background: var(--nav);
 		border-top: 1px solid var(--border);
 		z-index: 10;

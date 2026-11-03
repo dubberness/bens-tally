@@ -28,7 +28,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		padding: 24px var(--gutter);
+		padding: calc(24px + env(safe-area-inset-top)) var(--gutter)
+			calc(24px + env(safe-area-inset-bottom));
 	}
 	.box {
 		width: 100%;
