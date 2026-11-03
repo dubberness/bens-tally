@@ -144,6 +144,8 @@ export interface LineView {
 	planCents: number;
 	actualCents: number;
 	keptCents: number;
+	/** The left-out group (repayment, investing, one_off) most of its kept money belongs to. */
+	keptAction: string | null;
 	merchants: MerchantTotal[];
 	count: number;
 }
@@ -204,6 +206,15 @@ export interface BudgetMonth {
 	pay: PayView;
 }
 
+/** Which left-out group a line's kept money belongs to, by the biggest amount. */
+function keptActionOf(rows: TxView[]): string | null {
+	const by = new Map<string, number>();
+	for (const r of rows)
+		if (r.action === 'repayment' || r.action === 'investing' || r.action === 'one_off')
+			by.set(r.action, (by.get(r.action) ?? 0) - r.amountCents);
+	return [...by.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+}
+
 export function budgetMonth(month: string, includeOneOffs: boolean): BudgetMonth {
 	const txs = monthTransactions(month);
 	const s = summarise(txs.map(toRow), { includeOneOffs });
@@ -224,6 +235,7 @@ export function budgetMonth(month: string, includeOneOffs: boolean): BudgetMonth
 				planCents: planFor(l.id, month),
 				actualCents: s.lineSpend.get(l.id) ?? 0,
 				keptCents: s.lineKept.get(l.id) ?? 0,
+				keptAction: keptActionOf(rows),
 				merchants: byMerchant(rows),
 				count: rows.length
 			};

@@ -59,6 +59,9 @@
 		if (Math.abs(d) < 50) return 'On plan';
 		return d > 0 ? `${usd(d)} over` : `${usd(-d)} to spare`;
 	}
+	const others = $derived(
+		v.keptLines.filter((l) => !v.leftOut.some((g) => g.key === l.keptAction))
+	);
 	const leftOutText = $derived(
 		v.leftOut.length
 			? `Leaves out ${v.leftOut.map((l) => `${l.title.toLowerCase()} ${usd(l.cents)}`).join(', ')}.`
@@ -243,6 +246,7 @@
 				<span class="lbl">Left out of living spend</span>
 				{#each v.leftOut as g (g.key)}
 					{@const target = g.key.startsWith('person:') ? g.key : `action:${g.key}`}
+					{@const covered = v.keptLines.filter((l) => l.keptAction === g.key)}
 					<a class="row out" href={listHref(target)}>
 						<span class="grow">
 							<span class="nm">{g.title}</span>
@@ -255,20 +259,34 @@
 						</span>
 						<span class="num strong">{usd(g.cents)}</span>
 					</a>
+					{#each covered as l (l.id)}
+						<a class="row sub-line" href={listHref(`line:${l.id}`)}>
+							<span class="grow">
+								<span class="small">{l.name}</span>
+								<span class="sub small"
+									>{l.planCents ? `plan ${usd(l.planCents)} a month` : 'no plan'} · {usd(
+										l.keptCents
+									)} this month</span
+								>
+							</span>
+						</a>
+					{/each}
 				{/each}
-				{#each v.keptLines as l (l.id)}
-					<a class="row out" href={listHref(`line:${l.id}`)}>
-						<span class="grow">
-							<span class="nm">{l.name}</span>
-							<span class="sub small"
-								>{l.planCents ? `plan ${usd(l.planCents)} a month` : 'no plan'}</span
-							>
-						</span>
-						<span class="num strong"
-							>{l.keptCents || l.actualCents ? usd(l.keptCents + l.actualCents) : '—'}</span
-						>
-					</a>
-				{/each}
+				{#if others.length}
+					<span class="lbl plan-head">Plan lines for these</span>
+					{#each others as l (l.id)}
+						<a class="row sub-line" href={listHref(`line:${l.id}`)}>
+							<span class="grow">
+								<span class="small">{l.name}</span>
+								<span class="sub small"
+									>{l.planCents ? `plan ${usd(l.planCents)} a month` : 'no plan'} · {usd(
+										l.keptCents + l.actualCents
+									)} this month</span
+								>
+							</span>
+						</a>
+					{/each}
+				{/if}
 			</section>
 		{/if}
 
@@ -587,6 +605,18 @@
 		color: var(--text);
 		text-decoration: none;
 		min-height: 52px;
+	}
+	.sub-line {
+		color: var(--text);
+		text-decoration: none;
+		padding: 6px 0 6px 18px;
+		min-height: 44px;
+		border-top: 0;
+		border-left: 2px solid var(--surface-2);
+		margin-left: 4px;
+	}
+	.plan-head {
+		margin-top: 8px;
 	}
 	.person {
 		flex-direction: row;
