@@ -206,3 +206,10 @@ export function shortDay(date: string): string {
 		timeZone: 'UTC'
 	}).format(Date.UTC(y, m - 1, d));
 }
+
+/** Whole years lived by `date` for someone born on `birth` ('YYYY-MM-DD'). */
+export function ageOn(birth: string, date: string): number {
+	const [by, bm, bd] = birth.split('-').map(Number);
+	const [y, m, d] = date.split('-').map(Number);
+	return y - by - (m < bm || (m === bm && d < bd) ? 1 : 0);
+}
