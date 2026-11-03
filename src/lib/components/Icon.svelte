@@ -10,7 +10,8 @@
 		plan: '<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/>',
 		settings:
 			'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>',
-		back: '<path d="M15 5l-7 7 7 7"/>'
+		back: '<path d="M15 5l-7 7 7 7"/>',
+		next: '<path d="M9 5l7 7-7 7"/>'
 	} as const;
 
 	let { name, size = 22 }: { name: keyof typeof paths; size?: number } = $props();

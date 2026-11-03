@@ -395,8 +395,10 @@ export function payView(month?: string): PayView {
 		realCents: real.get(p.accountId) ?? 0
 	}));
 	const planned = new Set(splits.map((x) => x.accountId));
+	const tolerance = budgetSetting<number>(BUDGET_SETTINGS.tolerance);
 	for (const [id, cents] of real) {
-		if (planned.has(id) || id === regular?.accountId || cents <= 0) continue;
+		// Savers outside the plan only show when they really get more than pocket change.
+		if (planned.has(id) || id === regular?.accountId || cents <= tolerance) continue;
 		const acc = accounts.get(id);
 		if (!acc) continue;
 		splits.push({
