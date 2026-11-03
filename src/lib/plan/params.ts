@@ -113,6 +113,8 @@ export interface PlanContext {
 	today: string;
 	/** Average living costs per month over recent months, cents. */
 	measuredSpending: { cents: number; months: number; from: string; to: string } | null;
+	/** Whether that average counts one-off spending (a Budget setting). */
+	spendingIncludesOneOffs: boolean;
 	/** Average investing per month over recent months, cents. */
 	measuredInvesting: { cents: number; months: number } | null;
 	/** Birth date saved in Settings. */
@@ -222,4 +224,12 @@ export function resolve(p: PlanParams, ctx: PlanContext): Resolved {
 		superCents,
 		accounts
 	};
+}
+
+/** The same assumptions always give the same text, so two sets can be compared. */
+export function canonical(p: PlanParams): string {
+	const counted = Object.fromEntries(
+		Object.entries(p.counted).sort(([a], [b]) => a.localeCompare(b))
+	);
+	return JSON.stringify({ ...p, counted }, Object.keys(p).sort().concat(Object.keys(counted)));
 }

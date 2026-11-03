@@ -22,6 +22,7 @@ const acct = (id: number, kind: string, investable: boolean, valueCents: number)
 const ctx: PlanContext = {
 	today: '2030-06-15',
 	measuredSpending: { cents: 300_000, months: 12, from: '2029-06', to: '2030-05' },
+	spendingIncludesOneOffs: false,
 	measuredInvesting: { cents: 130_000, months: 3 },
 	settingsBirthDate: '2000-06-16',
 	accounts: [

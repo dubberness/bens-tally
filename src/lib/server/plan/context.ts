@@ -19,6 +19,7 @@ export function planContext(today: string = localDate()): PlanContext {
 	return {
 		today,
 		measuredSpending: averageSpending(12, includeOneOffs),
+		spendingIncludesOneOffs: includeOneOffs,
 		measuredInvesting: averageInvesting(3),
 		settingsBirthDate: birthDate(),
 		accounts: rows.map((a) => {
