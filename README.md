@@ -17,15 +17,16 @@ is data entered in the app and stored in the SQLite database in the container's 
 
 The image is `ghcr.io/dubberness/bens-tally`. On Unraid, use `unraid-template.xml`.
 
-| Variable                                | Purpose                                                                   |
-| --------------------------------------- | ------------------------------------------------------------------------- |
-| `ORIGIN`                                | Public address, e.g. `https://tally.benpost.com`                          |
-| `OIDC_ISSUER`                           | OIDC provider, e.g. `https://pocketid.benpost.com`                        |
-| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | The OIDC client. Callback URL: `<ORIGIN>/auth/callback`                   |
-| `OIDC_ALLOWED_SUBJECTS`                 | Optional allow-list. Empty: the first person to sign in becomes the owner |
-| `UP_TOKEN`                              | Optional Up personal access token; the app only reads with it             |
-| `WORKER_URL` / `WORKER_TOKEN`           | Optional mail Worker for Betashares emails (see `worker/README.md`)       |
-| `DATA_DIR`                              | Defaults to `/data` in the image                                          |
+| Variable                                | Purpose                                                                    |
+| --------------------------------------- | -------------------------------------------------------------------------- |
+| `ORIGIN`                                | Public address, e.g. `https://tally.benpost.com`                           |
+| `OIDC_ISSUER`                           | OIDC provider, e.g. `https://pocketid.benpost.com`                         |
+| `OIDC_CLIENT_ID` / `OIDC_CLIENT_SECRET` | The OIDC client. Callback URL: `<ORIGIN>/auth/callback`                    |
+| `OIDC_ALLOWED_SUBJECTS`                 | Optional allow-list. Empty: the first person to sign in becomes the owner  |
+| `UP_TOKEN`                              | Optional Up personal access token; the app only reads with it              |
+| `WORKER_URL` / `WORKER_TOKEN`           | Optional mail Worker for Betashares emails (see `worker/README.md`)        |
+| `API_READ_TOKEN` / `API_WRITE_TOKEN`    | Optional tokens for scripted access from the home network (32+ characters) |
+| `DATA_DIR`                              | Defaults to `/data` in the image                                           |
 
 Your history loads from an .xlsx export of the old spreadsheet at Manage › Sheet import.
 

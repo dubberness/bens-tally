@@ -88,6 +88,41 @@
 				<p class="sub">No backups yet. The first one runs at 2:30 am, or use Run now.</p>
 			{/each}
 		</div>
+		<a class="small link" href="/api/copy" download>Download a copy of everything now ›</a>
+	</section>
+
+	<section class="card">
+		<span class="lbl">Claude access</span>
+		{#if !data.api.read && !data.api.write}
+			<p class="sub">
+				Off. Give the container an API_READ_TOKEN (look only) or API_WRITE_TOKEN (can also change
+				things through these same screens) and Claude can open the app from your home network. The
+				tokens don't work through tally.benpost.com.
+			</p>
+		{:else}
+			<p class="sub">
+				{data.api.write ? 'Can look and make changes' : 'Can look, not change'} · home network only. Changes
+				go through the same screens and edit history as yours.
+			</p>
+			{#if data.api.recent.length}
+				<div class="list">
+					{#each data.api.recent as c (c.at + c.path)}
+						<div class="row">
+							<div class="grow">
+								<span class="name small">{c.method} {c.path}</span>
+								<span class="sub small">{shortDateTime(new Date(c.at))} · {c.status}</span>
+							</div>
+							{#if c.method !== 'GET' && c.method !== 'HEAD'}<span class="badge">change</span>{/if}
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<p class="sub small">No requests since the app last started.</p>
+			{/if}
+		{/if}
+		{#if data.api.tooShort}
+			<p class="sub small">A token is shorter than 32 characters, so it's ignored.</p>
+		{/if}
 	</section>
 
 	<section class="card">
@@ -122,6 +157,12 @@
 </div>
 
 <style>
+	.link {
+		display: inline-block;
+		margin-top: 10px;
+		font-weight: 600;
+		text-decoration: none;
+	}
 	.page-title {
 		font-size: 28px;
 		letter-spacing: -0.02em;

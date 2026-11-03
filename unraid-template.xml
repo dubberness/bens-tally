@@ -62,6 +62,14 @@
           Description="Optional. The APP_TOKEN secret set on the mail Worker."
           Type="Variable" Display="always" Required="false" Mask="true"></Config>
 
+  <Config Name="Claude read token" Target="API_READ_TOKEN" Default=""
+          Description="Optional, 32+ characters. Lets a script on the home network look at everything (not through the tunnel)."
+          Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+
+  <Config Name="Claude write token" Target="API_WRITE_TOKEN" Default=""
+          Description="Optional, 32+ characters. Like the read token, but can also make changes through the app's own screens."
+          Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+
   <Config Name="TZ" Target="TZ" Default="Australia/Hobart"
           Type="Variable" Display="advanced" Required="false" Mask="false">Australia/Hobart</Config>
   <Config Name="PUID" Target="PUID" Default="99"

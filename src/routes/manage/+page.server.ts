@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { jobs, lastRun, runJob } from '$lib/server/jobs/scheduler';
 import { listBackups, KEEP_DAILY, KEEP_MONTHLY } from '$lib/server/jobs/backup';
 import { getSetting } from '$lib/server/settings';
+import { apiStatus, recentApiCalls } from '$lib/server/auth/api';
 import type { Owner } from '$lib/server/auth/oidc';
 import { buildSha, oidc } from '$lib/server/env';
 import type { Actions, PageServerLoad } from './$types';
@@ -29,7 +30,8 @@ export const load: PageServerLoad = () => {
 			};
 		}),
 		backups: listBackups(),
-		keep: { daily: KEEP_DAILY, monthly: KEEP_MONTHLY }
+		keep: { daily: KEEP_DAILY, monthly: KEEP_MONTHLY },
+		api: { ...apiStatus(), recent: recentApiCalls().slice(0, 8) }
 	};
 };
 

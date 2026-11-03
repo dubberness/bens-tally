@@ -29,3 +29,12 @@ export const mailWorker = {
 	url: (env.WORKER_URL || process.env.WORKER_URL || '').trim().replace(/\/+$/, ''),
 	token: (env.WORKER_TOKEN || process.env.WORKER_TOKEN || '').trim()
 };
+
+/**
+ * Bearer tokens for scripted access on the home network (Claude): one that can only read,
+ * one that can also change things through the app's own forms. Empty = off.
+ */
+export const apiTokens = {
+	read: (env.API_READ_TOKEN || process.env.API_READ_TOKEN || '').trim(),
+	write: (env.API_WRITE_TOKEN || process.env.API_WRITE_TOKEN || '').trim()
+};
