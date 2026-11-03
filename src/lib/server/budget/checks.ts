@@ -55,7 +55,8 @@ export const payChecks: CheckSource = () => {
 	}
 	if (pay.regular)
 		for (const s of pay.splits) {
-			if (s.planCents == null) continue;
+			// What stays in the account pay lands in is never a transfer, so it can't be compared.
+			if (s.planCents == null || s.accountId === pay.regular.accountId) continue;
 			if (Math.abs(s.realCents - s.planCents) <= tolerance) continue;
 			out.push({
 				key: `budget:saver:${s.accountId}`,

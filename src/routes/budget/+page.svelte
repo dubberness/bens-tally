@@ -139,7 +139,9 @@
 							></span>{s.name}</span
 						>
 						<span class="num strong">{s.planCents == null ? '—' : usd(s.planCents)}</span>
-						<span class="sub small">really {usd(s.realCents)}</span>
+						{#if s.accountId !== regular?.accountId}<span class="sub small"
+								>really {usd(s.realCents)}</span
+							>{:else}<span class="sub small">stays where pay lands</span>{/if}
 					</div>
 				{:else}
 					<p class="sub">No pay split yet. Add one in the budget editor.</p>

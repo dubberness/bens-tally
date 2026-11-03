@@ -1,3 +1,5 @@
+import { eq } from 'drizzle-orm';
+import { db, schema } from '../db';
 import { getSetting, setSetting } from '../settings';
 
 /**
@@ -28,7 +30,9 @@ export function budgetSetting<T>(spec: Spec): T {
 }
 
 export function setBudgetSetting(spec: Spec, value: unknown) {
-	setSetting(spec.key, value);
+	// "Not set" is the absence of a row, so the generic starting value applies again.
+	if (value === null) db.delete(schema.settings).where(eq(schema.settings.key, spec.key)).run();
+	else setSetting(spec.key, value);
 }
 
 export type PayFrequency = 'week' | 'fortnight' | 'month';
