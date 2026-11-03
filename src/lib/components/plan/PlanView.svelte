@@ -502,7 +502,11 @@
 							<div class="acct">
 								<label for="count-{a.id}" class="aname">
 									<span>{a.name}</span>
-									<span class="sub small num">{usd(a.valueCents)}</span>
+									<span class="sub small num"
+										>{usd(a.valueCents)}{d.counted[a.id] !== defaultClass(a)
+											? ` · usually ${CLASS_LABEL[defaultClass(a)].toLowerCase()}`
+											: ''}</span
+									>
 								</label>
 								<select
 									id="count-{a.id}"
@@ -511,11 +515,7 @@
 									bind:value={d.counted[a.id]}
 								>
 									{#each ['outside', 'super', 'none'] as c (c)}
-										<option value={c}
-											>{CLASS_LABEL[c as AccountClass]}{defaultClass(a) === c
-												? ' (usual)'
-												: ''}</option
-										>
+										<option value={c}>{CLASS_LABEL[c as AccountClass]}</option>
 									{/each}
 								</select>
 							</div>
