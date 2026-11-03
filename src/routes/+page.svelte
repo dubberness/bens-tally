@@ -571,7 +571,7 @@
 	}
 	.last:hover {
 		color: var(--text);
-		border-color: #3a3a42;
+		border-color: var(--border-strong);
 	}
 	.last-total {
 		font-size: 22px;

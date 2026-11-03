@@ -1,3 +1,4 @@
+import type { Theme } from '$lib/theme';
 import { getSetting, setSetting } from '../settings';
 
 /*
@@ -6,7 +7,7 @@ import { getSetting, setSetting } from '../settings';
  * point, not anyone's real figure.
  */
 
-export type Theme = 'dark' | 'light' | 'system';
+export type { Theme };
 
 export interface PrefDef<T> {
 	key: string;
@@ -43,7 +44,7 @@ export const PREFS = {
 	theme: {
 		key: 'prefs.theme',
 		label: 'Theme',
-		help: 'Light mode arrives in the polish phase; dark is used until then.',
+		help: 'Dark, light, or whatever the phone or computer is set to.',
 		fallback: 'dark' as Theme
 	}
 } as const;

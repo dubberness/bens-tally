@@ -26,8 +26,8 @@
 		min-height: 56px;
 		padding: 10px 16px;
 		border-radius: 16px;
-		background: #261a10;
-		border: 1px solid #4a3626;
+		background: var(--warn-bg);
+		border: 1px solid var(--warn-border);
 		color: var(--text);
 		text-decoration: none;
 	}

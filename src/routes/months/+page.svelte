@@ -224,8 +224,8 @@
 		min-height: 48px;
 		padding: 0 16px;
 		border-radius: 16px;
-		background: #261a10;
-		border: 1px solid #4a3626;
+		background: var(--warn-bg);
+		border: 1px solid var(--warn-border);
 		text-decoration: none;
 		font-size: 14px;
 		font-weight: 600;
@@ -268,7 +268,7 @@
 		gap: 2px;
 	}
 	.stripe {
-		background: repeating-linear-gradient(135deg, var(--estimate) 0 6px, #b8963f 6px 9px);
+		background: repeating-linear-gradient(135deg, var(--estimate) 0 6px, var(--estimate-2) 6px 9px);
 	}
 	.legend-rows {
 		display: flex;
@@ -323,7 +323,7 @@
 		right: 4px;
 		top: 128px;
 		height: 1px;
-		background: #33333a;
+		background: var(--border-strong);
 	}
 	.barbtn {
 		all: unset;
@@ -389,7 +389,7 @@
 	}
 	.detail {
 		gap: 4px;
-		border-color: #3a3a42;
+		border-color: var(--border-strong);
 	}
 	.detail h2 {
 		font-size: 22px;

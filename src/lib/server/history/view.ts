@@ -23,7 +23,7 @@ const KIND_COLOUR: Record<string, string> = {
 	investment: 'var(--c-etf)',
 	super: 'var(--c-super)',
 	property: 'var(--c-home)',
-	other: '#9aa3b5'
+	other: 'var(--c-other)'
 };
 const DEBT_COLOURS = ['var(--c-debt-1)', 'var(--c-debt-2)', 'var(--c-debt-3)'];
 

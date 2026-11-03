@@ -719,7 +719,7 @@
 		justify-content: center;
 		font: 700 13px var(--font-body);
 		flex: none;
-		color: #111113;
+		color: var(--accent-ink);
 	}
 	p {
 		margin: 0;

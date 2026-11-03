@@ -576,7 +576,7 @@
 		min-width: 52px;
 		min-height: 44px;
 		border-radius: 999px;
-		border: 1px solid #33333a;
+		border: 1px solid var(--border-strong);
 		background: var(--inset);
 		color: var(--chip-text);
 		font: 600 13px var(--font-body);

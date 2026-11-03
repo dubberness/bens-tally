@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Icon from '$lib/components/Icon.svelte';
 	import '$lib/components/history/form.css';
+	import { showTheme, themeOf } from '$lib/theme';
 
 	let { data, form } = $props();
 	const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -17,9 +18,12 @@
 	method="POST"
 	action="?/save"
 	class="h-form grid"
-	use:enhance={() =>
-		({ update }) =>
-			update({ reset: false })}
+	use:enhance={({ formData }) =>
+		({ result, update }) => {
+			// Switch the colours now rather than at the next page load.
+			if (result.type === 'success') showTheme(themeOf(formData.get('theme')));
+			return update({ reset: false });
+		}}
 >
 	<section class="card">
 		<span class="lbl">Money and months</span>

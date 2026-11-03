@@ -1,29 +1,47 @@
-/* Design tokens from the approved concept. Light mode arrives in the polish phase. */
+/*
+ * Design tokens from the approved concept. Each colour is written once as
+ * light-dark(light, dark); data-theme on <html> (set by the server from the
+ * Theme setting) picks which side applies, or lets the phone choose.
+ */
 :root {
-	--ground: #111113;
-	--surface: #18181b;
-	--surface-2: #232328;
-	--border: #26262b;
-	--inset: #111113;
-	--nav: #141416;
-	--text: #f4f2ee;
-	--text-2: #a09ea6;
-	--text-3: #85838c;
-	--chip-text: #c9c7cf;
-	--accent: #ff9f5a;
-	--accent-ink: #1a1205;
-	--link: #ffb37d;
-	--link-hover: #ffd0ad;
-	--gain: #5ee0a8;
-	--loss: #ff7a85;
-	--estimate: #e9c46a;
-	--c-cash: #7fb2ff;
-	--c-etf: #4fd1c5;
-	--c-super: #a79bff;
-	--c-home: #e9c46a;
-	--c-debt-1: #ff7a85;
-	--c-debt-2: #c9606b;
-	--c-debt-3: #8e4a52;
+	--ground: light-dark(#f3efe8, #111113);
+	--surface: light-dark(#fffdf9, #18181b);
+	--surface-2: light-dark(#ece6dc, #232328);
+	--border: light-dark(#e1dacd, #26262b);
+	--border-strong: light-dark(#cdc5b6, #33333a);
+	--inset: light-dark(#f3efe8, #111113);
+	--nav: light-dark(#fbf8f3, #141416);
+	--text: light-dark(#1c1a18, #f4f2ee);
+	--text-2: light-dark(#5b5752, #a09ea6);
+	--text-3: light-dark(#645f5a, #85838c);
+	--chip-text: light-dark(#47433f, #c9c7cf);
+	--accent: light-dark(#b44c05, #ff9f5a);
+	--accent-hover: light-dark(#9a4004, #ffb07a);
+	--accent-ink: light-dark(#ffffff, #1a1205);
+	--accent-soft: light-dark(#fdeede, #3a2414);
+	--link: light-dark(#a84a08, #ffb37d);
+	--link-hover: light-dark(#7c3405, #ffd0ad);
+	--gain: light-dark(#087244, #5ee0a8);
+	--gain-soft: light-dark(#dcf2e8, #163a2c);
+	--loss: light-dark(#c0222f, #ff7a85);
+	--estimate: light-dark(#8a6508, #e9c46a);
+	--estimate-2: light-dark(#c9a13f, #b8963f);
+	--c-cash: light-dark(#2f6fd6, #7fb2ff);
+	--c-etf: light-dark(#0b8077, #4fd1c5);
+	--c-super: light-dark(#6b5bd6, #a79bff);
+	--c-home: light-dark(#a87b0a, #e9c46a);
+	--c-other: light-dark(#6f7a90, #9aa3b5);
+	--c-debt-1: light-dark(#d9414f, #ff7a85);
+	--c-debt-2: light-dark(#b5525c, #c9606b);
+	--c-debt-3: light-dark(#8a4850, #8e4a52);
+	/* Warm notice (close-the-month banner, budget alerts) and the cool "someone else" card */
+	--warn-bg: light-dark(#fbeedd, #261a10);
+	--warn-border: light-dark(#e6c9a6, #4a3626);
+	--warn-text: light-dark(#6b4a2e, #e6cdb8);
+	--info-bg: light-dark(#e8f0fb, #141a22);
+	--info-border: light-dark(#c3d5ee, #24303f);
+	--info-soft: light-dark(#d5e3f8, #1d2836);
+	--track: light-dark(#e1dacd, #2a2a30);
 
 	--font-display: 'Bricolage Grotesque Variable', 'Inter Variable', system-ui, sans-serif;
 	--font-body: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -32,6 +50,12 @@
 	--gutter: 16px;
 
 	color-scheme: dark;
+}
+:root[data-theme='light'] {
+	color-scheme: light;
+}
+:root[data-theme='system'] {
+	color-scheme: light dark;
 }
 
 *,
@@ -150,7 +174,7 @@ h3 {
 }
 .btn:hover {
 	color: var(--text);
-	border-color: #3a3a40;
+	border-color: var(--border-strong);
 }
 .btn.primary {
 	background: var(--accent);
@@ -158,7 +182,7 @@ h3 {
 	color: var(--accent-ink);
 }
 .btn.primary:hover {
-	background: #ffb07a;
+	background: var(--accent-hover);
 	color: var(--accent-ink);
 }
 .btn:disabled {

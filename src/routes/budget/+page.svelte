@@ -518,8 +518,8 @@
 		flex: none;
 	}
 	.alert {
-		background: #261a10;
-		border: 1px solid #4a3626;
+		background: var(--warn-bg);
+		border: 1px solid var(--warn-border);
 		border-radius: 16px;
 		padding: 14px;
 		display: flex;
@@ -528,12 +528,12 @@
 		color: var(--link);
 	}
 	.alert .sub {
-		color: #e6cdb8;
+		color: var(--warn-text);
 	}
 	.btn.warm {
 		align-self: flex-start;
 		background: transparent;
-		border-color: #4a3626;
+		border-color: var(--warn-border);
 		color: var(--link);
 	}
 	.mini {
@@ -622,8 +622,8 @@
 		flex-direction: row;
 		gap: 14px;
 		align-items: flex-start;
-		background: #141a22;
-		border-color: #24303f;
+		background: var(--info-bg);
+		border-color: var(--info-border);
 		color: var(--text);
 		text-decoration: none;
 	}
@@ -631,7 +631,7 @@
 		width: 40px;
 		height: 40px;
 		border-radius: 12px;
-		background: #1d2836;
+		background: var(--info-soft);
 		color: var(--c-cash);
 		display: flex;
 		align-items: center;

@@ -320,7 +320,7 @@
 		flex: 1;
 		height: 6px;
 		border-radius: 999px;
-		background: #2a2a30;
+		background: var(--track);
 	}
 	.progress .seg.on {
 		background: var(--gain);
@@ -376,11 +376,11 @@
 		flex: none;
 	}
 	.ok {
-		background: #163a2c;
+		background: var(--gain-soft);
 		color: var(--gain);
 	}
 	.todo {
-		background: #3a2414;
+		background: var(--accent-soft);
 		color: var(--accent);
 		font-size: 13px;
 		font-weight: 700;
@@ -423,7 +423,7 @@
 	}
 	.preview {
 		gap: 14px;
-		border-color: #3a2a1c;
+		border-color: var(--warn-border);
 	}
 	.nw {
 		font-size: 44px;
@@ -463,7 +463,7 @@
 		display: flex;
 		gap: 10px;
 		align-items: center;
-		background: #163a2c;
+		background: var(--gain-soft);
 		color: var(--gain);
 		border-radius: 16px;
 		padding: 14px;

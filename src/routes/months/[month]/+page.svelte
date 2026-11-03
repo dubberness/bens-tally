@@ -245,7 +245,7 @@
 		font-size: 15px;
 	}
 	.line.total {
-		border-top-color: #3a3a42;
+		border-top-color: var(--border-strong);
 	}
 	.strong {
 		font-weight: 600;

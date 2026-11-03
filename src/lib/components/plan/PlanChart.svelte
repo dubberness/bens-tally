@@ -166,7 +166,7 @@
 		border-radius: 6px;
 	}
 	.base {
-		stroke: #33333a;
+		stroke: var(--border-strong);
 	}
 	.grid {
 		stroke: var(--surface-2);

@@ -343,7 +343,7 @@
 	input[type='color'] {
 		width: 48px;
 		height: 44px;
-		border: 1px solid #33333a;
+		border: 1px solid var(--border-strong);
 		border-radius: 12px;
 		background: var(--inset);
 		padding: 4px;

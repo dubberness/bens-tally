@@ -93,6 +93,8 @@ async function tick() {
 
 /** Start the once-a-minute loop (once per process, even across dev hot reloads). */
 export function startScheduler() {
+	// The browser tests switch the clock off so nothing reaches out to the internet.
+	if (process.env.DISABLE_JOBS === '1') return;
 	const g = globalThis as unknown as { __tallyScheduler?: NodeJS.Timeout };
 	if (g.__tallyScheduler) return;
 	g.__tallyScheduler = setInterval(() => void tick(), 60_000);

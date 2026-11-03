@@ -9,6 +9,8 @@ import {
 	type ApiAccess
 } from '$lib/server/auth/api';
 import { skipLogin } from '$lib/server/env';
+import { theme } from '$lib/server/history/prefs';
+import { applyTheme, themeOf } from '$lib/theme';
 import { startScheduler } from '$lib/server/jobs/scheduler';
 
 if (!building) startScheduler();
@@ -59,7 +61,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		redirect(303, to === '/' ? '/signin' : `/signin?to=${encodeURIComponent(to)}`);
 	}
 
-	const response = await resolve(event);
+	const response = await resolve(event, {
+		transformPageChunk: ({ html }) => applyTheme(html, themeOf(theme()))
+	});
 	if (api)
 		noteApiCall({
 			at: Date.now(),
