@@ -283,6 +283,8 @@ export function mergeAccounts(keepId: number, removeId: number) {
 		db.delete(schema.accounts).where(eq(schema.accounts.id, removeId)).run();
 		const patch: Partial<Account> = { updatedAt: new Date() };
 		if (upId) patch.upAccountId = upId;
+		// Investable if either was, so a merge never quietly drops money from the Plan.
+		if (gone.investable && !keep.investable) patch.investable = true;
 		if (gone.openedOn && (!keep.openedOn || gone.openedOn < keep.openedOn))
 			patch.openedOn = gone.openedOn;
 		db.update(schema.accounts).set(patch).where(eq(schema.accounts.id, keepId)).run();

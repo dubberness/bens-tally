@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { db, schema } from '../db';
 import type { Breakdown } from './breakdown';
 import { setCalculation } from './accounts-admin';
@@ -85,5 +86,18 @@ describe('locking months', () => {
 		expect(snapshotValues(`${Y}-04`).get(a.id)).toBe(150_00);
 		expect(snapshotValues(`${Y}-04`).has(b.id)).toBe(false);
 		expect(getSnapshot(`${Y}-04`)!.netWorthCents).toBe(before);
+	});
+
+	it('keeps the investable flag when either account had it', () => {
+		const keep = make('Test saver (bank)', 'cash', 'asset');
+		const gone = make('Test saver (sheet)', 'cash', 'asset');
+		db.update(schema.accounts)
+			.set({ investable: true })
+			.where(eq(schema.accounts.id, gone.id))
+			.run();
+		mergeAccounts(keep.id, gone.id);
+		expect(
+			db.select().from(schema.accounts).where(eq(schema.accounts.id, keep.id)).get()!.investable
+		).toBe(true);
 	});
 });
