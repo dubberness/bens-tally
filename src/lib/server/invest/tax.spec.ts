@@ -69,10 +69,7 @@ describe('taxYears', () => {
 
 describe('taxYearCsv', () => {
 	it('lists each parcel sold, then the year totals', () => {
-		const [year] = taxYears(
-			[{ ...d('2026-08-01', 100, 5000), ticker: 'A,B' }],
-			[rule('2000-01-01', 5000)]
-		);
+		const [year] = taxYears([{ ...d('2026-08-01', 100, 5000), ticker: 'A,B' }]);
 		const lines = taxYearCsv(year).split('\n');
 		expect(lines[0]).toBe(
 			'Sale date,Fund,Bought,Units,Cost base,Proceeds,Gain or loss,Discount %,Discounted gain'
