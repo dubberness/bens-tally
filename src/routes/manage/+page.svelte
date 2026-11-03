@@ -92,6 +92,18 @@
 	</section>
 
 	<section class="card">
+		<span class="lbl">Export everything</span>
+		<p class="sub">
+			All your records, to keep or to open in a spreadsheet. Sign-in cookies and the sign-in owner
+			are left out.
+		</p>
+		<div class="exports">
+			<a class="btn" href="/manage/export/everything.json" download>JSON, one file</a>
+			<a class="btn" href="/manage/export/everything.zip" download>CSV, one file per table (zip)</a>
+		</div>
+	</section>
+
+	<section class="card">
 		<span class="lbl">Claude access</span>
 		{#if !data.api.read && !data.api.write}
 			<p class="sub">
@@ -157,6 +169,11 @@
 </div>
 
 <style>
+	.exports {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
 	.link {
 		display: inline-block;
 		margin-top: 10px;

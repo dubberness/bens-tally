@@ -1,4 +1,5 @@
 import { asc, eq } from 'drizzle-orm';
+import { toCsv } from '$lib/csv';
 import { addMonths, financialYear, localDate, monthName, sameDayInMonth } from '$lib/time';
 import { db, schema } from '../db';
 import { holdings } from './holdings';
@@ -288,8 +289,7 @@ export function taxYearCsv(year: TaxYear): string {
 	rows.push(['Discount', money(year.discountCents)]);
 	rows.push(['Net capital gain', money(year.netGainCents)]);
 	rows.push(['Loss to carry forward', money(year.carryForwardCents)]);
-	const cell = (s: string) => (/[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
-	return rows.map((r) => r.map(cell).join(',')).join('\n') + '\n';
+	return toCsv(rows);
 }
 
 /** For Manage › Tax rules. */

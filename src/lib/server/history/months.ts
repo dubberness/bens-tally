@@ -1,4 +1,5 @@
 import { formatMoneyShort } from '$lib/money';
+import { toCsv } from '$lib/csv';
 import { daysBetween, localDate, localMonth, monthEnd, monthName, shortMonth } from '$lib/time';
 import type { Breakdown } from './breakdown';
 import {
@@ -122,12 +123,7 @@ export function monthDetail(month: string) {
 	};
 }
 
-const csvCell = (v: string | number | null) => {
-	if (v == null) return '';
-	const s = String(v);
-	return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-};
-const dollars = (c: number | null | undefined) => (c == null ? null : (c / 100).toFixed(2));
+const dollars = (c: number | null | undefined) => (c == null ? '' : (c / 100).toFixed(2));
 
 /** Every month as CSV: net worth, the breakdown, the note and each account's value. */
 export function monthsCsv(): string {
@@ -151,31 +147,27 @@ export function monthsCsv(): string {
 		'note',
 		...used.map((a) => `${a.name} (${a.side === 'liability' ? 'owed' : 'value'})`)
 	];
-	const lines = [head.map(csvCell).join(',')];
+	const rows: (string | null)[][] = [head];
 	for (const s of snaps) {
 		const b = s.breakdown as Breakdown | null;
 		const v = snapshotValues(s.month);
-		lines.push(
-			[
-				s.month,
-				s.status,
-				dollars(s.netWorthCents),
-				dollars(b?.total),
-				dollars(b?.cash),
-				dollars(b?.bought),
-				dollars(b?.markets),
-				dollars(b?.super),
-				dollars(b?.debt),
-				dollars(b?.estimates),
-				dollars(b?.other),
-				s.note,
-				...used.map((a) => dollars(v.get(a.id)))
-			]
-				.map(csvCell)
-				.join(',')
-		);
+		rows.push([
+			s.month,
+			s.status,
+			dollars(s.netWorthCents),
+			dollars(b?.total),
+			dollars(b?.cash),
+			dollars(b?.bought),
+			dollars(b?.markets),
+			dollars(b?.super),
+			dollars(b?.debt),
+			dollars(b?.estimates),
+			dollars(b?.other),
+			s.note,
+			...used.map((a) => dollars(v.get(a.id)))
+		]);
 	}
-	return lines.join('\n') + '\n';
+	return toCsv(rows);
 }
 
 /** Latest entry for an account, for "last updated" lines. */

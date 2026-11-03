@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { discountFrom, ruleOn, taxYears, type TaxedDisposal, type TaxRule } from './tax';
+import {
+	discountFrom,
+	ruleOn,
+	taxYearCsv,
+	taxYears,
+	type TaxedDisposal,
+	type TaxRule
+} from './tax';
 
 const rule = (fromDate: string, discountBp: number, toDate: string | null = null): TaxRule => ({
 	id: 1,
@@ -57,5 +64,22 @@ describe('taxYears', () => {
 		const [a, b] = taxYears([d('2026-10-15', -468), d('2027-09-01', 1000, 5000)]);
 		expect(a).toMatchObject({ netGainCents: 0, carryForwardCents: 46_800, totalCents: -46_800 });
 		expect(b).toMatchObject({ broughtForwardCents: 46_800, netGainCents: 26_600 });
+	});
+});
+
+describe('taxYearCsv', () => {
+	it('lists each parcel sold, then the year totals', () => {
+		const [year] = taxYears(
+			[{ ...d('2026-08-01', 100, 5000), ticker: 'A,B' }],
+			[rule('2000-01-01', 5000)]
+		);
+		const lines = taxYearCsv(year).split('\n');
+		expect(lines[0]).toBe(
+			'Sale date,Fund,Bought,Units,Cost base,Proceeds,Gain or loss,Discount %,Discounted gain'
+		);
+		// The comma in the ticker is quoted, amounts are plain dollars
+		expect(lines[1]).toBe('2026-08-01,"A,B",2020-01-01,1.000000,0.00,100.00,100.00,50,50.00');
+		expect(lines[2]).toBe('');
+		expect(lines).toContain('Net capital gain,50.00');
 	});
 });
