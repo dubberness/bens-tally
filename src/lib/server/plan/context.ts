@@ -4,6 +4,7 @@ import { accountValue } from '../ledger/value';
 import { averageInvesting, averageSpending } from '../budget/month';
 import { budgetSetting, BUDGET_SETTINGS } from '../budget/settings';
 import { birthDate } from '../history/prefs';
+import { planLoans } from './loans';
 import { localDate } from '$lib/time';
 import type { PlanContext } from '$lib/plan/params';
 
@@ -22,6 +23,7 @@ export function planContext(today: string = localDate()): PlanContext {
 		spendingIncludesOneOffs: includeOneOffs,
 		measuredInvesting: averageInvesting(3),
 		settingsBirthDate: birthDate(),
+		loans: planLoans(today),
 		accounts: rows.map((a) => {
 			const v = accountValue(a, null);
 			return {

@@ -3,6 +3,7 @@ import {
 	defaultClass,
 	type AccountClass,
 	type PlanAccount,
+	type PlanLoan,
 	type PlanParams
 } from '$lib/plan/params';
 
@@ -23,7 +24,11 @@ function number(f: FormData, k: string, label: string): number | null | string {
 }
 
 /** Read the Plan form into params, or say what is wrong. */
-export function paramsFromForm(f: FormData, accounts: PlanAccount[]): PlanParams | string {
+export function paramsFromForm(
+	f: FormData,
+	accounts: PlanAccount[],
+	loans: Pick<PlanLoan, 'id'>[] = []
+): PlanParams | string {
 	const bad = (v: unknown): v is string => typeof v === 'string';
 
 	const spending = dollars(f, 'spending', 'Living costs');
@@ -40,10 +45,10 @@ export function paramsFromForm(f: FormData, accounts: PlanAccount[]): PlanParams
 	const tax = pct('superTaxPct', 'Contributions tax');
 	const wd = pct('withdrawalPct', 'Withdrawal rate');
 	const age = number(f, 'accessAge', 'Super access age');
-	const year = number(f, 'mortgageGoneYear', 'Mortgage-gone year');
+	const year = number(f, 'mortgageGoneYear', 'Loan payoff year');
 	for (const v of [ret, inf, rate, tax, wd, age, year]) if (bad(v)) return v;
 	if (ret === null || inf === null || rate === null || tax === null || wd === null || age === null)
-		return 'Fill in every assumption except salary, birth date and the mortgage year';
+		return 'Fill in every assumption except salary, birth date and the loan payoff year';
 
 	const counted: Record<string, AccountClass> = {};
 	for (const a of accounts) {
@@ -51,6 +56,9 @@ export function paramsFromForm(f: FormData, accounts: PlanAccount[]): PlanParams
 		if ((v === 'outside' || v === 'super' || v === 'none') && v !== defaultClass(a))
 			counted[String(a.id)] = v;
 	}
+
+	// A ticked loan sends a field; an unticked one sends nothing.
+	const loansOff = loans.filter((l) => !f.get(`loan_${l.id}`)).map((l) => String(l.id));
 
 	// "Follow" means: keep using the measured average instead of a saved number.
 	return {
@@ -65,6 +73,7 @@ export function paramsFromForm(f: FormData, accounts: PlanAccount[]): PlanParams
 		accessAge: age as number,
 		birthDate: text(f, 'birthDate') || null,
 		counted,
-		mortgageGoneYear: year as number | null
+		mortgageGoneYear: year as number | null,
+		loansOff
 	};
 }

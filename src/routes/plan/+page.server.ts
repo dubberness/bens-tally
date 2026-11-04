@@ -32,7 +32,8 @@ export const actions: Actions = {
 	/** Save the assumptions into the scenario being looked at. */
 	save: async ({ request }) => {
 		const f = await request.formData();
-		const params = paramsFromForm(f, planContext().accounts);
+		const ctx = planContext();
+		const params = paramsFromForm(f, ctx.accounts, ctx.loans);
 		if (typeof params === 'string') return fail(400, { section: 'save', error: params });
 		const r = saveScenario(idOf(f), params);
 		if (!r.ok) return fail(400, { section: 'save', error: r.error });
@@ -42,7 +43,8 @@ export const actions: Actions = {
 	/** Save the assumptions as a new, named what-if. */
 	saveAs: async ({ request }) => {
 		const f = await request.formData();
-		const params = paramsFromForm(f, planContext().accounts);
+		const ctx = planContext();
+		const params = paramsFromForm(f, ctx.accounts, ctx.loans);
 		if (typeof params === 'string') return fail(400, { section: 'saveAs', error: params });
 		// With nothing saved yet the first save is the base; a what-if needs a base to sit beside.
 		if (idOf(f) === 0) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { annuity, requirement, runPlan, type PlanInputs } from './model';
+import { annuity, loanPayment, requirement, runPlan, type PlanInputs } from './model';
 
 const base: PlanInputs = {
 	age: 30,
@@ -166,5 +166,100 @@ describe('runPlan', () => {
 			endAge: 45
 		});
 		expect(r.series.every((p) => p.outside >= 0 && p.super >= 0)).toBe(true);
+	});
+});
+
+describe('loan repayments after work stops', () => {
+	const loan = { amountYear: 12_000, years: 20 };
+
+	it('changes nothing with no loans, an empty list or a loan with nothing left', () => {
+		const plain = runPlan(base);
+		expect(runPlan({ ...base, loans: [] })).toEqual(plain);
+		expect(
+			runPlan({ ...base, loans: [{ amountYear: 12_000, years: 0 }], inflation: 0.03 })
+		).toEqual(plain);
+		expect(requirement({ ...base, loans: [] }, 57, 0)).toMatchObject({ loans: 0, bridge: 90_000 });
+	});
+
+	it('adds nothing for a loan paid off before the free age', () => {
+		const plain = runPlan(base);
+		// free at 58 (28 years away); a loan with 5 years left is long gone by then
+		const r = runPlan({ ...base, loans: [{ amountYear: 12_000, years: 5 }] });
+		expect(r.freeAge).toBe(plain.freeAge);
+		expect(r.atFree?.loans).toBe(0);
+		expect(r.series.at(-1)).toEqual(plain.series.at(-1));
+	});
+
+	it('adds the value at the free age of the repayments still due, with no return or inflation', () => {
+		// at 40 (10 years in), 10 more years of 12k are still due
+		expect(requirement({ ...base, loans: [loan] }, 40, 0).loans).toBe(120_000);
+		// a part year counts in proportion: 9.5 years left at 40 is 9.5 repayments
+		expect(
+			requirement({ ...base, loans: [{ amountYear: 12_000, years: 19.5 }] }, 40, 0).loans
+		).toBe(114_000);
+	});
+
+	it('pushes the free age later when a loan runs past it', () => {
+		// 30 years of 12k running past the free age of 58 (to 60): two repayments after it
+		const r = runPlan({ ...base, loans: [{ amountYear: 12_000, years: 30 }] });
+		// k=28 needs 560k vs 530k + 24k (two years of repayments); 560k >= 554k still holds
+		expect(r.freeAge).toBe(58);
+		// a bigger repayment tips it over: at k=28 O = 560k but needs 530k + 2 * 20k = 570k
+		const bigger = runPlan({ ...base, loans: [{ amountYear: 20_000, years: 30 }] });
+		expect(bigger.freeAge).toBe(59);
+		expect(bigger.freeAge!).toBeGreaterThan(runPlan(base).freeAge!);
+	});
+
+	it('counts repayments that run beyond the access age too', () => {
+		const inp = { ...base, loans: [{ amountYear: 10_000, years: 40 }] };
+		// at 40 (10 years in), 30 years of repayments are due, 20 of them after the access age
+		expect(requirement(inp, 40, 0).loans).toBe(300_000);
+	});
+
+	it('shrinks repayments by inflation and discounts them at the return', () => {
+		const inp: PlanInputs = {
+			...base,
+			realReturn: 0.05,
+			inflation: 0.1,
+			loans: [{ amountYear: 12_000, years: 2 }]
+		};
+		expect(loanPayment(inp, 1)).toBeCloseTo(12_000 / 1.1, 6);
+		expect(loanPayment(inp, 2)).toBeCloseTo(12_000 / 1.21, 6);
+		expect(loanPayment(inp, 3)).toBe(0);
+		const pv = 12_000 / 1.1 / 1.05 + 12_000 / 1.21 / 1.05 ** 2;
+		expect(requirement(inp, 30, 0).loans).toBeCloseTo(pv, 6);
+		// at 31 only the second repayment is left, valued one year on
+		expect(requirement(inp, 31, 0).loans).toBeCloseTo(12_000 / 1.21 / 1.05, 6);
+	});
+
+	it('takes repayments out of outside money in the bridge years', () => {
+		const inp: PlanInputs = {
+			...base,
+			outside: 2_000_000,
+			age: 50,
+			loans: [{ amountYear: 12_000, years: 4 }]
+		};
+		const r = runPlan(inp);
+		expect(r.freeAge).toBe(50);
+		expect(r.series[1].outside).toBe(2_000_000 - 30_000 - 12_000);
+		expect(r.series[4].outside).toBe(2_000_000 - 4 * 42_000);
+		// and stops when the loan is paid off
+		expect(r.series[5].outside).toBe(r.series[4].outside - 30_000);
+	});
+
+	it('pays them from outside money once super is open, leaving super for spending', () => {
+		const inp: PlanInputs = {
+			...base,
+			age: 60,
+			accessAge: 60,
+			outside: 36_000,
+			super: 800_000,
+			loans: [{ amountYear: 12_000, years: 3 }]
+		};
+		const r = runPlan(inp);
+		expect(r.freeAge).toBe(60);
+		expect(r.series[1]).toMatchObject({ outside: 24_000, super: 770_000 });
+		expect(r.series[3]).toMatchObject({ outside: 0, super: 710_000 });
+		expect(r.series[4]).toMatchObject({ outside: 0, super: 680_000 });
 	});
 });

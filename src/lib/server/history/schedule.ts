@@ -139,6 +139,25 @@ export function expectedLoanBalance(
 	);
 }
 
+/**
+ * Months of repayments left on a balance at a fixed rate and repayment, as a fractional
+ * count (the last repayment is part of a month). Null when the repayment never clears the
+ * interest, so the loan would never be paid off.
+ */
+export function monthsToPayoff(
+	balanceCents: number,
+	annualRateBp: number,
+	repaymentCents: number
+): number | null {
+	if (balanceCents <= 0) return 0;
+	if (repaymentCents <= 0) return null;
+	const i = monthlyRate(annualRateBp);
+	if (i === 0) return balanceCents / repaymentCents;
+	const share = (balanceCents * i) / repaymentCents;
+	if (share >= 1) return null;
+	return -Math.log(1 - share) / Math.log(1 + i);
+}
+
 /** Share of a value in basis points, rounded to the cent. */
 export function shareOf(valueCents: number, shareBp: number): number {
 	return Math.round((valueCents * shareBp) / 10_000);

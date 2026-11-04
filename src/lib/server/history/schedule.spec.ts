@@ -3,6 +3,7 @@ import {
 	amortisedBalance,
 	amortisedFrom,
 	expectedLoanBalance,
+	monthsToPayoff,
 	paymentDatesBetween,
 	paymentsMade,
 	shareOf
@@ -62,5 +63,24 @@ describe('loan schedule', () => {
 	it('takes a share in basis points', () => {
 		expect(shareOf(500_000_00, 2_500)).toBe(125_000_00);
 		expect(shareOf(333_33, 1)).toBe(3);
+	});
+});
+
+describe('monthsToPayoff', () => {
+	it('matches the schedule: the balance is gone after the whole months plus a part', () => {
+		const n = monthsToPayoff(10_000_00, 600, 200_00)!;
+		expect(n).toBeGreaterThan(57);
+		expect(n).toBeLessThan(58);
+		// 57 whole repayments still leave a balance; 58 clear it.
+		expect(amortisedBalance({ ...loan, payments: null }, '2028-09-15')).toBeGreaterThan(0);
+		expect(amortisedBalance({ ...loan, payments: null }, '2028-10-15')).toBe(0);
+	});
+	it('divides plainly when there is no interest', () => {
+		expect(monthsToPayoff(1_000_00, 0, 250_00)).toBe(4);
+	});
+	it('is null when the repayment never clears the interest, zero with nothing owed', () => {
+		expect(monthsToPayoff(10_000_00, 600, 50_00)).toBeNull();
+		expect(monthsToPayoff(10_000_00, 600, 0)).toBeNull();
+		expect(monthsToPayoff(0, 600, 200_00)).toBe(0);
 	});
 });

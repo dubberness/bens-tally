@@ -1,4 +1,4 @@
-import { ageOn } from '$lib/time';
+import { addMonths, ageOn } from '$lib/time';
 import type { PlanInputs } from './model';
 
 /**
@@ -32,8 +32,13 @@ export interface PlanParams {
 	birthDate: string | null;
 	/** Accounts moved from where they count by default; keyed by account id. */
 	counted: Record<string, AccountClass>;
-	/** Year the mortgage is gone, shown on the chart only. */
+	/**
+	 * Year the biggest loan is paid off. null works it out from its balance and
+	 * repayment; a year here replaces that, for the repayments and the chart marker.
+	 */
 	mortgageGoneYear: number | null;
+	/** Loans (account ids) whose repayments are left out; every other loan is counted. */
+	loansOff: string[];
 }
 
 export const SEED_PARAMS: PlanParams = {
@@ -48,7 +53,8 @@ export const SEED_PARAMS: PlanParams = {
 	accessAge: 60,
 	birthDate: null,
 	counted: {},
-	mortgageGoneYear: null
+	mortgageGoneYear: null,
+	loansOff: []
 };
 
 const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null);
@@ -75,7 +81,14 @@ export function normaliseParams(raw: unknown): PlanParams {
 		accessAge: num(r.accessAge) ?? seed.accessAge,
 		birthDate: typeof r.birthDate === 'string' && r.birthDate ? r.birthDate : null,
 		counted,
-		mortgageGoneYear: num(r.mortgageGoneYear)
+		mortgageGoneYear: num(r.mortgageGoneYear),
+		loansOff: Array.isArray(r.loansOff)
+			? [
+					...new Set(
+						r.loansOff.filter((v) => typeof v === 'string' || typeof v === 'number').map(String)
+					)
+				]
+			: []
 	};
 }
 
@@ -95,7 +108,7 @@ export function paramProblem(p: PlanParams): string | null {
 	if (p.birthDate !== null && !/^\d{4}-\d{2}-\d{2}$/.test(p.birthDate))
 		return 'Birth date should look like 1990-12-31';
 	if (p.mortgageGoneYear !== null && !within(p.mortgageGoneYear, 1900, 2200))
-		return 'Mortgage-gone year should be a four-digit year';
+		return 'Loan payoff year should be a four-digit year';
 	return null;
 }
 
@@ -106,6 +119,18 @@ export interface PlanAccount {
 	investable: boolean;
 	valueCents: number;
 	asOf: string | null;
+}
+
+/** A loan being repaid by regular repayments. */
+export interface PlanLoan {
+	id: number;
+	name: string;
+	balanceCents: number;
+	asOf: string | null;
+	/** Repaid each month, cents. */
+	repaymentCents: number;
+	/** Months of repayments left, part of a month allowed; null when it would never be paid off. */
+	monthsLeft: number | null;
 }
 
 /** Everything the model reads from outside the scenario. */
@@ -120,6 +145,8 @@ export interface PlanContext {
 	/** Birth date saved in Settings. */
 	settingsBirthDate: string | null;
 	accounts: PlanAccount[];
+	/** Loans with regular repayments, biggest first. */
+	loans: PlanLoan[];
 }
 
 /** Where an account counts unless the scenario says otherwise. */
@@ -151,6 +178,26 @@ export interface Resolved {
 	outsideCents: number;
 	superCents: number;
 	accounts: (PlanAccount & { cls: AccountClass; defaultCls: AccountClass })[];
+	loans: ResolvedLoan[];
+	/** Repayments added after work stops, a year, cents (today's amount). */
+	loanYearlyCents: number;
+	/** Year the biggest loan is gone: the saved year, else worked out; null when unknown. */
+	loanGoneYear: number | null;
+}
+
+export interface ResolvedLoan extends PlanLoan {
+	/** Whether its repayments are added after work stops. */
+	counted: boolean;
+	/** The biggest loan, which the saved payoff year applies to. */
+	main: boolean;
+	/** Repaid each year, cents. */
+	yearlyCents: number;
+	/** Years of repayments left, or null when it can't be worked out. */
+	yearsLeft: number | null;
+	/** Year of its last repayment. */
+	payoffYear: number | null;
+	/** The payoff year came from the scenario, not the loan's own numbers. */
+	overridden: boolean;
 }
 
 export function resolve(p: PlanParams, ctx: PlanContext): Resolved {
@@ -188,6 +235,44 @@ export function resolve(p: PlanParams, ctx: PlanContext): Resolved {
 	const outsideCents = sum('outside');
 	const superCents = sum('super');
 
+	const today = Number(ctx.today.slice(0, 4));
+	const mainId = ctx.loans.reduce<PlanLoan | null>(
+		(m, l) => (m === null || l.balanceCents > m.balanceCents ? l : m),
+		null
+	)?.id;
+	const loans: ResolvedLoan[] = ctx.loans.map((l) => {
+		const main = l.id === mainId;
+		const overridden = main && p.mortgageGoneYear !== null;
+		const yearsLeft = overridden
+			? Math.max(0, p.mortgageGoneYear! - today)
+			: l.monthsLeft === null
+				? null
+				: l.monthsLeft / 12;
+		const payoffYear = overridden
+			? p.mortgageGoneYear
+			: l.monthsLeft === null
+				? null
+				: Number(addMonths(ctx.today.slice(0, 7), Math.ceil(l.monthsLeft)).slice(0, 4));
+		return {
+			...l,
+			counted: !p.loansOff.includes(String(l.id)),
+			main,
+			yearlyCents: l.repaymentCents * 12,
+			yearsLeft,
+			payoffYear,
+			overridden
+		};
+	});
+	for (const l of loans)
+		if (l.counted && l.yearsLeft === null)
+			notes.push(
+				`${l.name} is repaid by less than its interest, so its payoff can't be worked out and its repayments aren't added.`
+			);
+	const running = loans.filter((l) => l.counted && l.yearsLeft !== null && l.yearsLeft > 0);
+	const mainLoan = loans.find((l) => l.main);
+	const loanGoneYear =
+		p.mortgageGoneYear ?? (mainLoan?.counted ? (mainLoan.payoffYear ?? null) : null);
+
 	const realReturn = (1 + p.returnPct / 100) / (1 + p.inflationPct / 100) - 1;
 	const salary = (p.salaryCents ?? 0) / 100;
 
@@ -204,7 +289,9 @@ export function resolve(p: PlanParams, ctx: PlanContext): Resolved {
 			realReturn,
 			withdrawal: p.withdrawalPct / 100,
 			accessAge: p.accessAge,
-			endAge: Math.max(p.accessAge, age) + 5
+			endAge: Math.max(p.accessAge, age) + 5,
+			inflation: p.inflationPct / 100,
+			loans: running.map((l) => ({ amountYear: l.yearlyCents / 100, years: l.yearsLeft! }))
 		};
 	}
 
@@ -222,7 +309,10 @@ export function resolve(p: PlanParams, ctx: PlanContext): Resolved {
 		realReturn,
 		outsideCents,
 		superCents,
-		accounts
+		accounts,
+		loans,
+		loanYearlyCents: running.reduce((t, l) => t + l.yearlyCents, 0),
+		loanGoneYear
 	};
 }
 
@@ -231,5 +321,8 @@ export function canonical(p: PlanParams): string {
 	const counted = Object.fromEntries(
 		Object.entries(p.counted).sort(([a], [b]) => a.localeCompare(b))
 	);
-	return JSON.stringify({ ...p, counted }, Object.keys(p).sort().concat(Object.keys(counted)));
+	return JSON.stringify(
+		{ ...p, counted, loansOff: [...p.loansOff].sort() },
+		Object.keys(p).sort().concat(Object.keys(counted))
+	);
 }

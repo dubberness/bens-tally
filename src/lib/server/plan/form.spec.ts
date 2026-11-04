@@ -39,6 +39,7 @@ describe('paramsFromForm', () => {
 			salaryCents: null,
 			birthDate: null,
 			mortgageGoneYear: null,
+			loansOff: [],
 			returnPct: 7,
 			accessAge: 60
 		});
@@ -65,6 +66,13 @@ describe('paramsFromForm', () => {
 			birthDate: '1990-01-02',
 			mortgageGoneYear: 2040
 		});
+	});
+
+	it('records the loans left unticked', () => {
+		const loans = [{ id: 7 }, { id: 8 }, { id: 9 }];
+		const p = paramsFromForm(form({ loan_7: 'on', loan_9: 'on' }), accounts, loans);
+		expect(p).toMatchObject({ loansOff: ['8'] });
+		expect(paramsFromForm(form(), accounts)).toMatchObject({ loansOff: [] });
 	});
 
 	it('says what is wrong', () => {

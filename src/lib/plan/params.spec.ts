@@ -7,7 +7,8 @@ import {
 	resolve,
 	weeklyFromMonthly,
 	type PlanAccount,
-	type PlanContext
+	type PlanContext,
+	type PlanLoan
 } from './params';
 
 const acct = (id: number, kind: string, investable: boolean, valueCents: number): PlanAccount => ({
@@ -25,6 +26,7 @@ const ctx: PlanContext = {
 	spendingIncludesOneOffs: false,
 	measuredInvesting: { cents: 130_000, months: 3 },
 	settingsBirthDate: '2000-06-16',
+	loans: [],
 	accounts: [
 		acct(1, 'cash', true, 10_000_00),
 		acct(2, 'investment', true, 40_000_00),
@@ -54,6 +56,10 @@ describe('normaliseParams', () => {
 	it('keeps only known account classes', () => {
 		const p = normaliseParams({ counted: { '4': 'outside', '5': 'bogus' } });
 		expect(p.counted).toEqual({ '4': 'outside' });
+	});
+	it('keeps the ids of loans left out', () => {
+		expect(normaliseParams({ loansOff: [3, '3', '4', null] }).loansOff).toEqual(['3', '4']);
+		expect(normaliseParams({ loansOff: 'x' }).loansOff).toEqual([]);
 	});
 });
 
@@ -131,5 +137,79 @@ describe('resolve', () => {
 
 	it('tests the age on the birthday itself', () => {
 		expect(resolve(SEED_PARAMS, { ...ctx, today: '2030-06-16' }).age).toBe(30);
+	});
+});
+
+describe('resolve with loans', () => {
+	const loan = (id: number, balance: number, over: Partial<PlanLoan> = {}): PlanLoan => ({
+		id,
+		name: `Loan ${id}`,
+		balanceCents: balance * 100,
+		asOf: '2030-06-01',
+		repaymentCents: 2_000_00,
+		monthsLeft: 120,
+		...over
+	});
+	const withLoans = (loans: PlanLoan[]): PlanContext => ({ ...ctx, loans });
+
+	it('gives the model no loans when there are none, same as before', () => {
+		const r = resolve(SEED_PARAMS, ctx);
+		expect(r.inputs?.loans).toEqual([]);
+		expect(r.loanYearlyCents).toBe(0);
+		expect(r.loanGoneYear).toBeNull();
+	});
+
+	it('adds every loan by default, a year of repayments for as long as it runs', () => {
+		const r = resolve(
+			SEED_PARAMS,
+			withLoans([loan(1, 300_000), loan(2, 20_000, { monthsLeft: 18 })])
+		);
+		expect(r.inputs?.loans).toEqual([
+			{ amountYear: 24_000, years: 10 },
+			{ amountYear: 24_000, years: 1.5 }
+		]);
+		expect(r.loanYearlyCents).toBe(48_000_00);
+		expect(r.inputs?.inflation).toBeCloseTo(0.025, 12);
+		// 120 months from June 2030 ends in June 2040; 18 months in December 2031
+		expect(r.loans.map((l) => l.payoffYear)).toEqual([2040, 2031]);
+		expect(r.loans.map((l) => l.main)).toEqual([true, false]);
+		expect(r.loanGoneYear).toBe(2040);
+	});
+
+	it('leaves out a loan that is unticked', () => {
+		const r = resolve(
+			{ ...SEED_PARAMS, loansOff: ['2'] },
+			withLoans([loan(1, 300_000), loan(2, 20_000)])
+		);
+		expect(r.inputs?.loans).toHaveLength(1);
+		expect(r.loans.find((l) => l.id === 2)?.counted).toBe(false);
+	});
+
+	it('lets the saved payoff year replace the worked-out one for the biggest loan', () => {
+		const r = resolve(
+			{ ...SEED_PARAMS, mortgageGoneYear: 2035 },
+			withLoans([loan(2, 20_000), loan(1, 300_000)])
+		);
+		const big = r.loans.find((l) => l.id === 1)!;
+		expect(big).toMatchObject({ overridden: true, payoffYear: 2035, yearsLeft: 5, main: true });
+		expect(r.loans.find((l) => l.id === 2)?.overridden).toBe(false);
+		expect(r.inputs?.loans?.map((l) => l.years)).toEqual([10, 5]);
+		expect(r.loanGoneYear).toBe(2035);
+	});
+
+	it('counts no repayments once the saved payoff year has passed', () => {
+		const r = resolve({ ...SEED_PARAMS, mortgageGoneYear: 2029 }, withLoans([loan(1, 300_000)]));
+		expect(r.inputs?.loans).toEqual([]);
+	});
+
+	it('still marks the chart from a saved year with no loans', () => {
+		expect(resolve({ ...SEED_PARAMS, mortgageGoneYear: 2041 }, ctx).loanGoneYear).toBe(2041);
+	});
+
+	it('says so when a loan can never be paid off at its repayment, and adds nothing for it', () => {
+		const r = resolve(SEED_PARAMS, withLoans([loan(1, 300_000, { monthsLeft: null })]));
+		expect(r.inputs?.loans).toEqual([]);
+		expect(r.notes.join(' ')).toMatch(/Loan 1/);
+		expect(r.loanGoneYear).toBeNull();
 	});
 });
