@@ -13,6 +13,8 @@ vite.config.ts.timestamp-*
 # Never commit real finance data: sheet exports, emails, statements.
 *.xlsx
 *.csv
+# …but routes that serve CSV downloads are code, not data.
+!src/routes/**/*.csv/
 *.eml
 *.pdf
 /test-results
