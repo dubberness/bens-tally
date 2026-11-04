@@ -12,8 +12,12 @@ import { skipLogin } from '$lib/server/env';
 import { theme } from '$lib/server/history/prefs';
 import { applyTheme, themeOf } from '$lib/theme';
 import { startScheduler } from '$lib/server/jobs/scheduler';
+import { runFixups } from '$lib/server/history/fixups';
 
-if (!building) startScheduler();
+if (!building) {
+	runFixups();
+	startScheduler();
+}
 
 /** Paths that work without signing in. Everything else needs a session. */
 const PUBLIC = ['/api/health', '/auth/', '/signin'];

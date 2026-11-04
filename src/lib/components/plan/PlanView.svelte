@@ -54,7 +54,10 @@
 			mortgageGoneYear: p.mortgageGoneYear as number | null,
 			counted: Object.fromEntries(
 				ctx.accounts.map((a) => [a.id, p.counted[String(a.id)] ?? defaultClass(a)])
-			) as Record<number, AccountClass>
+			) as Record<number, AccountClass>,
+			loans: Object.fromEntries(
+				ctx.loans.map((l) => [l.id, !p.loansOff.includes(String(l.id))])
+			) as Record<number, boolean>
 		};
 	}
 	const start = untrack(() => resolve(scenario.params, ctx));
@@ -80,7 +83,8 @@
 				.filter((a) => d.counted[a.id] !== defaultClass(a))
 				.map((a) => [String(a.id), d.counted[a.id]])
 		),
-		mortgageGoneYear: n(d.mortgageGoneYear)
+		mortgageGoneYear: n(d.mortgageGoneYear),
+		loansOff: ctx.loans.filter((l) => d.loans[l.id] === false).map((l) => String(l.id))
 	});
 
 	const r = $derived(resolve(params, ctx));
@@ -135,6 +139,17 @@
 	const realPct = $derived((r.realReturn * 100).toFixed(1));
 	const superYear = $derived(r.inputs ? Math.round(r.inputs.superYear) : 0);
 
+	/** Loans whose repayments are added after work stops. */
+	const running = $derived(
+		r.loans.filter((l) => l.counted && l.yearsLeft !== null && l.yearsLeft > 0)
+	);
+	const untilText = (l: (typeof r.loans)[number]) =>
+		l.payoffYear === null
+			? 'never paid off at this repayment'
+			: l.yearsLeft === 0
+				? `paid off by ${l.payoffYear}`
+				: `until ${l.payoffYear}`;
+
 	const groups = $derived([
 		{ cls: 'outside' as const, title: 'Outside super', cents: r.outsideCents },
 		{ cls: 'super' as const, title: 'Super', cents: r.superCents }
@@ -171,7 +186,7 @@
 					series={result.series}
 					accessAge={P}
 					freeAge={free}
-					mortgageGoneYear={params.mortgageGoneYear}
+					mortgageGoneYear={r.loanGoneYear}
 				/>
 			</section>
 		{/if}
@@ -197,10 +212,40 @@
 				<span class="n" style="background: var(--c-super)">3</span>
 				<span><strong>Super.</strong> At {P} you can reach your super, and it takes over.</span>
 			</div>
+			{#if running.length}
+				<div class="loans" aria-label="Loan repayments">
+					<span class="lbl">Loan repayments</span>
+					{#if running.length === 1}
+						<p class="text">
+							Loan repayments of <strong class="num">{usd(running[0].yearlyCents)}</strong> a year
+							until
+							<strong class="num">{running[0].payoffYear}</strong> are added after you stop work.
+						</p>
+					{:else}
+						<p class="text">
+							Loan repayments of <strong class="num">{usd(r.loanYearlyCents)}</strong> a year are added
+							after you stop work, each until its loan is paid off:
+						</p>
+						<ul class="loan-list">
+							{#each running as l (l.id)}
+								<li>
+									<span>{l.name}</span>
+									<span class="num">{usd(l.yearlyCents)} a year, {untilText(l)}</span>
+								</li>
+							{/each}
+						</ul>
+					{/if}
+					<p class="sub small">
+						Repayments are a fixed amount of dollars, so in today's dollars they shrink each year
+						with inflation. Untick a loan, or set when it's paid off, in All assumptions.
+					</p>
+				</div>
+			{/if}
 			{#if result?.atFree && free !== null && free < P}
 				<p class="sub">
 					At {free} the bridge needs {usd(Math.round(result.atFree.bridge * 100))} outside super to pay
-					{usd(Math.round((r.inputs?.spendYear ?? 0) * 100))} a year until {P}{#if result.atFree.shortfall > 0},
+					{usd(Math.round((r.inputs?.spendYear ?? 0) * 100))} a year until {P}{#if result.atFree.loans > 0},
+						plus {usd(Math.round(result.atFree.loans * 100))} to keep paying your loans{/if}{#if result.atFree.shortfall > 0},
 						plus {usd(Math.round(result.atFree.shortfall * 100))} to top up super so it can pay {usd(
 							Math.round((r.inputs?.spendYear ?? 0) * 100)
 						)} a year at a
@@ -229,7 +274,7 @@
 			{/each}
 			<p class="text">
 				Your home and the debts against it are left out together, so they neither add to nor take
-				from the result.{notCounted.length
+				from the result. Only the loan repayments still due after you stop work are added.{notCounted.length
 					? ` Also not counted: ${notCounted.map((a) => a.name).join(', ')}.`
 					: ''}
 			</p>
@@ -238,7 +283,7 @@
 				{params.salaryCents !== null
 					? `Super gets ${params.superRatePct}% of a ${usd(params.salaryCents)} salary less ${params.superTaxPct}% tax (${usd(superYear * 100)} a year) until you stop work.`
 					: 'No salary is entered, so no super contributions are added.'}
-				Age Pension isn't counted, and the mortgage years aren't modelled.
+				Age Pension isn't counted.
 			</p>
 		</section>
 	</div>
@@ -478,7 +523,7 @@
 							</span>
 						</label>
 						<label class="h-label"
-							>Mortgage gone in (year)
+							>Biggest loan paid off in (year)
 							<input
 								class="h-input"
 								name="mortgageGoneYear"
@@ -488,9 +533,39 @@
 								placeholder="Optional"
 								bind:value={d.mortgageGoneYear}
 							/>
-							<span class="sub">Only marks the chart; it doesn't change the result.</span>
+							<span class="sub">
+								{#if r.loans.some((l) => l.main)}
+									Replaces the year worked out for {r.loans.find((l) => l.main)?.name}
+									({r.loans.find((l) => l.main)?.overridden
+										? 'your year'
+										: (r.loans.find((l) => l.main)?.payoffYear ?? 'no payoff')}). Blank uses that.
+								{:else}Marks the chart; there is no loan to repay.{/if}
+							</span>
 						</label>
 					</div>
+
+					{#if r.loans.length}
+						<fieldset class="accts">
+							<legend class="lbl">Loan repayments after you stop work</legend>
+							<p class="sub">
+								Repayments carry on until each loan is paid off, so they're added to what you need
+								outside super. Untick a loan to leave its repayments out.
+							</p>
+							{#each r.loans as l (l.id)}
+								<label class="h-check loan-row">
+									<input type="checkbox" name="loan_{l.id}" bind:checked={d.loans[l.id]} />
+									<span class="aname">
+										<span>{l.name}</span>
+										<span class="sub small num"
+											>{usd(l.balanceCents)} owed · {usd(l.repaymentCents)} a month · {untilText(
+												l
+											)}{l.overridden ? ' (your year)' : ''}</span
+										>
+									</span>
+								</label>
+							{/each}
+						</fieldset>
+					{/if}
 
 					<fieldset class="accts">
 						<legend class="lbl">Which accounts count</legend>
@@ -703,6 +778,35 @@
 		display: flex;
 		flex-direction: column;
 		gap: 14px;
+	}
+	.loans {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		border-top: 1px solid var(--surface-2);
+		padding-top: 14px;
+	}
+	.loan-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		font-size: 14px;
+	}
+	.loan-list li {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 2px 12px;
+	}
+	.loan-row {
+		align-items: flex-start;
+		padding: 8px 0;
+	}
+	.loan-row .aname {
+		flex: 1;
 	}
 	.step {
 		display: flex;

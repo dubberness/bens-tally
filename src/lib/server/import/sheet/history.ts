@@ -6,6 +6,7 @@ import { findOrCreateAccount, type NewAccount } from '../../accounts';
 import { serialToDate, type Cell, type Sheet } from '../xlsx';
 import { cents, find, is, need, num, starts, text } from './cells';
 import type { SheetArea, SheetContext } from './types';
+import { boughtFromTrades, firstTradeDate } from '../../history/bought-from-trades';
 import {
 	breakdownBetween,
 	refreshOpenMonth,
@@ -612,14 +613,6 @@ function run(ctx: SheetContext) {
 			'ok',
 			'The sheet keeps one liabilities total per month; it was split into each loan, with the remainder on the loan entered by hand.'
 		);
-	const noCost = locked
-		.slice(1)
-		.filter((r, i) => !(etfCost.has(r.month) && etfCost.has(locked[i].month)));
-	if (noCost.length)
-		ctx.report(
-			'ok',
-			`Bought ETFs for ${noCost.length} early month${noCost.length === 1 ? '' : 's'} comes from the History tab’s ETF movements (the ETFs tab’s monthly cost table starts later).`
-		);
 	for (const [i, l] of loans.entries()) {
 		if (l.kind !== 'amortised') continue;
 		ctx.report(
@@ -698,10 +691,44 @@ function validate(ctx: SheetContext) {
 		);
 }
 
+/**
+ * Bought ETFs: the sheet's cost table records buys in a different month from the trade
+ * date, so once the trades are loaded (after this area has run) every month they cover
+ * is worked out from them. Only months before the first trade keep the sheet's figure.
+ */
+function finish(ctx: SheetContext) {
+	if (!lastRun) return;
+	const first = firstTradeDate();
+	const changed = boughtFromTrades();
+	const fromSheet = lastRun.months.filter((month) => {
+		const b = db.select().from(schema.snapshots).where(eq(schema.snapshots.month, month)).get()
+			?.breakdown as Breakdown | null;
+		return b?.boughtSource === 'sheet';
+	}).length;
+	if (!first) {
+		ctx.report(
+			'ok',
+			'No trades are loaded, so Bought ETFs comes from the sheet’s ETF cost table (or the History tab’s ETF movements); it follows trade dates once trades are loaded.'
+		);
+		return;
+	}
+	const fromTrades = lastRun.months.length - 1 - fromSheet;
+	ctx.report(
+		'ok',
+		`Bought ETFs for ${fromTrades} month${fromTrades === 1 ? '' : 's'} comes from trade dates${changed.length ? `, which moved ${changed.length} of them from the sheet’s month` : ''}.`
+	);
+	if (fromSheet)
+		ctx.report(
+			'ok',
+			`Bought ETFs for ${fromSheet} month${fromSheet === 1 ? '' : 's'} before the first trade comes from the sheet’s ETF cost table (or the History tab’s ETF movements).`
+		);
+}
+
 export const historyArea: SheetArea = {
 	id: 'history',
 	label: 'History',
 	wipe,
 	run,
+	finish,
 	validate
 };

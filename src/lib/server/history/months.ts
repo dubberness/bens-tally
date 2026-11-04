@@ -92,6 +92,7 @@ export function monthDetail(month: string) {
 	const editName = (field: string) => {
 		if (field === 'note') return 'Note';
 		if (field === 'net_worth') return 'Net worth';
+		if (field === 'bought') return 'Bought ETFs';
 		const id = Number(field.split(':')[1]);
 		return byId.get(id)?.name ?? 'An account';
 	};

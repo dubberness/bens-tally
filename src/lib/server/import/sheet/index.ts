@@ -73,6 +73,10 @@ export function runSheetImport(
 				area = a.id;
 				a.run(ctx);
 			}
+			for (const a of chosen) {
+				area = a.id;
+				a.finish?.(ctx);
+			}
 		})();
 		for (const a of chosen) {
 			area = a.id;

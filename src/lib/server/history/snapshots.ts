@@ -359,7 +359,8 @@ export function recompute(month: string) {
 		.run();
 }
 
-function recordEdit(
+/** Add a line to a locked month's edit history. */
+export function recordEdit(
 	month: string,
 	field: string,
 	oldValue: unknown,
