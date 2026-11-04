@@ -15,7 +15,7 @@
  * at A and grows at r to P, and it must reach E / w by then; the gap is brought back
  * to A at r.
  *
- * Loan repayments: E leaves out loan repayments, because while Ben works they come out
+ * Loan repayments: E leaves out loan repayments, because while work continues they come out
  * of pay and nothing changes before A. After A they are still owed until each loan is
  * paid off. A repayment is a fixed nominal amount, so in today's dollars it shrinks by
  * inflation every year: the repayment in year j from now is amount / (1 + inflation)^j.
