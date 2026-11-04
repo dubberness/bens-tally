@@ -2,7 +2,7 @@ import { and, asc, desc, eq, lte } from 'drizzle-orm';
 import { localDate } from '$lib/time';
 import { db, schema } from '../db';
 import { getSetting } from '../settings';
-import { matchLots, type LotMethod, type LotResult, type LotTrade } from './lots';
+import { matchLots, openUnits, type LotMethod, type LotResult, type LotTrade } from './lots';
 
 export type Instrument = typeof schema.instruments.$inferSelect;
 
@@ -74,9 +74,6 @@ export interface Holding {
 	lots: LotResult;
 }
 
-/** Rounding dust left by a sell typed a hair short (under 0.001 units) counts as sold out. */
-export const DUST_E6 = 1000;
-
 /** Units × price, rounded to the cent. */
 export const valueOf = (unitsE6: number, priceE4: number) => Math.round((unitsE6 * priceE4) / 1e8);
 
@@ -92,7 +89,7 @@ export function holdings(date: string | null, accountId?: number): Holding[] {
 	return list.map((instrument) => {
 		const lots = matchLots(tradesOf(instrument.id), method, date ?? undefined);
 		const held = lots.parcels.reduce((s, p) => s + p.unitsE6, 0);
-		const unitsE6 = held < DUST_E6 ? 0 : held;
+		const unitsE6 = openUnits(held);
 		const costCents = unitsE6 ? lots.parcels.reduce((s, p) => s + p.costCents, 0) : 0;
 		const price = unitsE6 > 0 ? priceOn(instrument, date) : null;
 		return {

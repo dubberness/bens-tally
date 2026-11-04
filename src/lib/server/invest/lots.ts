@@ -43,6 +43,18 @@ export interface LotResult {
 	oversoldE6: number;
 }
 
+/**
+ * Imported unit counts are rounded (to four decimals or so), so a sale that should close
+ * a position can leave a hair of units behind, e.g. 0.0001. Anything under this many
+ * millionths of a unit is that residue, not a holding: it counts as sold out everywhere
+ * (lists, value, daily change, price checks). Stored trades and parcels are never altered,
+ * and sales are still matched on the real unit counts, so capital gains are unaffected.
+ */
+export const RESIDUE_E6 = 1000;
+
+/** Units held, with rounding residue counted as nothing. */
+export const openUnits = (unitsE6: number) => (unitsE6 < RESIDUE_E6 ? 0 : unitsE6);
+
 /** Same-day buys go before sells so a buy-then-sell day doesn't look oversold. */
 export function tradeOrder(a: LotTrade, b: LotTrade): number {
 	if (a.date !== b.date) return a.date < b.date ? -1 : 1;
