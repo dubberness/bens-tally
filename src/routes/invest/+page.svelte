@@ -3,6 +3,8 @@
 	import { shortDate, shortDateTime } from '$lib/time';
 	import { arrow, signed, tone } from '$lib/components/history/fmt';
 	import ActivityList from '$lib/components/invest/ActivityList.svelte';
+	import ValueChart from '$lib/components/invest/ValueChart.svelte';
+	import { RANGES, rangeStart, rangeView, type Range } from '$lib/invest/range';
 
 	let { data } = $props();
 
@@ -15,6 +17,15 @@
 	const allTimePct = $derived(
 		data.costCents > 0 ? ((data.allTimeCents / data.costCents) * 100).toFixed(1) : null
 	);
+	/** Percentage of the day's starting value, two places: 0.29%. */
+	const dayPct = (c: { cents: number; baseCents: number }) =>
+		c.baseCents > 0 ? `${((Math.abs(c.cents) / c.baseCents) * 100).toFixed(2)}%` : null;
+	/** "▼ $12 · 0.3%" for a fund's row. */
+	const dayLine = (c: { cents: number; baseCents: number }) =>
+		[arrow(c.cents), dayPct(c)].filter(Boolean).join(' · ');
+
+	let range = $state<Range>('1m');
+	const view = $derived(rangeView(data.series, rangeStart(range, data.tax.today)));
 	const PRICE_SOURCE: Record<string, string> = {
 		yahoo: 'Yahoo Finance',
 		sheet_csv: 'your sheet',
@@ -55,6 +66,9 @@
 			<span class="num chg {tone(data.allTimeCents)}"
 				>{arrow(data.allTimeCents)} all time{allTimePct != null ? ` · ${allTimePct}%` : ''}</span
 			>
+			{#if data.day}
+				<span class="num chg {tone(data.day.cents)}">{dayLine(data.day)} {data.day.label}</span>
+			{/if}
 			<span class="sub num small"
 				>Unrealised {signed(data.unrealisedCents)} · sold {signed(data.realisedCents)} · distributions
 				{signed(data.distributionsCents)}</span
@@ -120,6 +134,43 @@
 	</header>
 
 	{#if data.holdings.length}
+		{#if data.series.length > 1}
+			<section class="card chartbox">
+				<div class="head">
+					<span class="lbl">Value</span>
+					<div class="seg-group" role="group" aria-label="Chart range">
+						{#each RANGES as r (r.id)}
+							<button class="seg" aria-pressed={range === r.id} onclick={() => (range = r.id)}
+								>{r.label}</button
+							>
+						{/each}
+					</div>
+				</div>
+				{#if view.shown.length > 1}
+					<ValueChart points={view.shown} />
+				{:else}
+					<span class="sub">Not enough history in this range yet.</span>
+				{/if}
+				<div class="stats">
+					<div>
+						<span class="sub small">Market change</span>
+						<span class="num strong {tone(view.marketCents)}">{signed(view.marketCents)}</span>
+					</div>
+					<div>
+						<span class="sub small">Money in</span>
+						<span class="num strong">{signed(view.moneyInCents)}</span>
+					</div>
+					<div>
+						<span class="sub small">Value change</span>
+						<span class="num strong {tone(view.changeCents)}">{signed(view.changeCents)}</span>
+					</div>
+				</div>
+				<span class="sub small legend"
+					><span class="ring" aria-hidden="true"></span>Days you bought or sold. Market change is
+					what the funds did, leaving out new money.</span
+				>
+			</section>
+		{/if}
 		<div class="cols">
 			<div class="col">
 				<section class="card">
@@ -175,6 +226,11 @@
 								<span class="num small strong {tone(h.valueCents - h.costCents)}"
 									>{signed(h.valueCents - h.costCents)}</span
 								>
+								{#if h.day}
+									<span class="num small {tone(h.day.cents)}"
+										>{dayLine(h.day)} {data.day?.label}</span
+									>
+								{/if}
 							</span>
 						</a>
 					{/each}
@@ -282,6 +338,60 @@
 		min-height: 44px;
 		display: flex;
 		align-items: center;
+	}
+	.chartbox {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+	}
+	.seg-group {
+		display: flex;
+		gap: 6px;
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		padding: 4px;
+		align-self: flex-start;
+		flex: none;
+	}
+	.seg {
+		border: 0;
+		font: 600 13px var(--font-body);
+		padding: 8px 14px;
+		border-radius: 999px;
+		min-height: 36px;
+		min-width: 44px;
+		cursor: pointer;
+		background: transparent;
+		color: var(--chip-text);
+	}
+	.seg[aria-pressed='true'] {
+		background: var(--text);
+		color: var(--ground);
+	}
+	.stats {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 8px;
+	}
+	.stats > div {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		min-width: 0;
+	}
+	.legend {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.ring {
+		width: 10px;
+		height: 10px;
+		flex: none;
+		border-radius: 999px;
+		border: 2px solid var(--text-2);
+		background: var(--ground);
 	}
 	.cols {
 		display: grid;

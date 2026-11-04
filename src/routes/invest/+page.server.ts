@@ -6,6 +6,7 @@ import { emailStatus } from '$lib/server/invest/email';
 import { emailJob } from '$lib/server/invest/jobs';
 import { lastRun } from '$lib/server/jobs/scheduler';
 import { taxRules, taxYearOf, upcomingTaxDates } from '$lib/server/invest/tax';
+import { performance } from '$lib/server/invest/daily';
 import { activity, portfolio } from '$lib/server/invest/view';
 import type { PageServerLoad } from './$types';
 
@@ -14,6 +15,7 @@ export const load: PageServerLoad = () => {
 	const today = localDate();
 	const year = taxYearOf(today);
 	const p = portfolio();
+	const perf = performance(today);
 	const unrealised = p.valueCents - p.costCents;
 	return {
 		valueCents: p.valueCents,
@@ -22,6 +24,13 @@ export const load: PageServerLoad = () => {
 		realisedCents: p.realisedCents,
 		distributionsCents: p.distributionsCents,
 		allTimeCents: unrealised + p.realisedCents + p.distributionsCents,
+		// Change since the previous close; null when there's nothing to compare with.
+		day: perf.change && {
+			cents: perf.change.cents,
+			baseCents: perf.change.baseCents,
+			label: perf.change.label
+		},
+		series: perf.series,
 		mix: p.mix,
 		holdings: p.held.map((h) => ({
 			id: h.instrument.id,
@@ -32,7 +41,12 @@ export const load: PageServerLoad = () => {
 			valueCents: h.valueCents ?? 0,
 			priceE4: h.price?.priceE4 ?? null,
 			priceSource: h.price?.source ?? null,
-			colour: p.colours.get(h.instrument.id)!
+			colour: p.colours.get(h.instrument.id)!,
+			// Only when it's from the same day as the total's figure.
+			day:
+				perf.change && perf.perFund.get(h.instrument.id)?.date === perf.change.date
+					? perf.perFund.get(h.instrument.id)!
+					: null
 		})),
 		priced: p.priced,
 		checks: runChecks().filter((c) => c.key.startsWith('invest:')),

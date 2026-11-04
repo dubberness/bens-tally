@@ -160,6 +160,28 @@ test.describe('install and downloads', () => {
 	});
 });
 
+test.describe('invest performance', () => {
+	test('shows the change since the previous close and a value chart that follows its range', async ({
+		page
+	}) => {
+		await page.goto('/invest');
+		await expect(
+			page.getByText(/(▲|▼) \$[\d,]+ · [\d.]+% (today|[A-Z][a-z]+)/).first()
+		).toBeVisible();
+		const chart = page.locator('.chartbox');
+		await expect(chart.locator('svg path')).not.toHaveCount(0);
+		for (const range of ['1W', '1M', '1Y', 'All']) {
+			await chart.getByRole('button', { name: range, exact: true }).click();
+			await expect(chart.getByRole('button', { name: range, exact: true })).toHaveAttribute(
+				'aria-pressed',
+				'true'
+			);
+		}
+		await expect(chart.getByText('Market change', { exact: true })).toBeVisible();
+		await expect(chart.getByText('Money in')).toBeVisible();
+	});
+});
+
 test.describe('theme setting', () => {
 	test('Light, Dark and Follow the phone each take effect', async ({ page }) => {
 		await page.emulateMedia({ colorScheme: 'dark' });

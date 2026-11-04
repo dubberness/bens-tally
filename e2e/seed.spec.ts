@@ -161,6 +161,18 @@ it('seeds the demo data', () => {
 			fetchedAt: now
 		})
 		.run();
+	// A few daily closes, so the Invest chart and the change since the previous close have days to show.
+	for (let back = 1; back <= 12; back++)
+		db.insert(schema.prices)
+			.values({
+				instrumentId: fund.id,
+				date: addDays(today, -back),
+				closeE4: price(MONTHS_OF_HISTORY) + (back % 3) * 1500 - 2000,
+				source: 'manual',
+				fetchedAt: now
+			})
+			.onConflictDoNothing()
+			.run();
 	db.insert(schema.distributions)
 		.values({
 			instrumentId: fund.id,
